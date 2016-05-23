@@ -1,0 +1,17 @@
+package ru.yaklimenko.fuel.db.entities;
+
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.table.DatabaseTable;
+
+/**
+ * Created by Антон on 21.05.2016.
+ */
+@DatabaseTable
+public class FuelCategory {
+
+    @DatabaseField(id = true)
+    public int id;
+
+    @DatabaseField
+    public String name;
+}

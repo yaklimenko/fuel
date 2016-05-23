@@ -1,0 +1,8 @@
+CMO/build/
+Inflector/
+.idea/
+.gradle/
+local.properties
+build/
+prj/prj.iml
+*.iml

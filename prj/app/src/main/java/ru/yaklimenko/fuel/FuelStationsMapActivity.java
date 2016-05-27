@@ -1,17 +1,21 @@
 package ru.yaklimenko.fuel;
 
+import android.app.Activity;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
+import android.support.annotation.NonNull;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 
-public class FuelStationsMapActivity extends FragmentActivity implements OnMapReadyCallback {
-
+public class FuelStationsMapActivity extends Activity implements OnMapReadyCallback {
+    public static final String TAG = FuelStationsMapActivity.class.getSimpleName();
     private GoogleMap mMap;
 
     @Override
@@ -22,6 +26,7 @@ public class FuelStationsMapActivity extends FragmentActivity implements OnMapRe
         MapFragment mapFragment = (MapFragment) getFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
     }
 
 
@@ -40,8 +45,65 @@ public class FuelStationsMapActivity extends FragmentActivity implements OnMapRe
         mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
 
         // Add a marker in Sydney and move the camera
-        LatLng tomsk = new LatLng(56, 84);
-        mMap.addMarker(new MarkerOptions().position(tomsk).title("Marker in Sydney"));
+        LatLng tomsk = new LatLng(56.492d, 85d);
+        //mMap.addMarker(new MarkerOptions().position(tomsk).title("Tomsk"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(tomsk));
+        mMap.moveCamera(CameraUpdateFactory.zoomTo(12f));
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+                Log.d(TAG, "onMapClick: " + latLng.toString());
+            }
+        });
+        drawMyLocation();
+
+    }
+
+    private void drawMyLocation() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            boolean fineLocationGranted = true;
+
+            fineLocationGranted = checkSelfPermission(
+                    android.Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED;
+
+            boolean coarseLocationGranted = false;
+
+            coarseLocationGranted = checkSelfPermission(
+                            android.Manifest.permission.ACCESS_COARSE_LOCATION
+                    ) == PackageManager.PERMISSION_GRANTED;
+            if (!fineLocationGranted && !coarseLocationGranted) {
+                String[] permissions = new String[2];
+                permissions[0] = android.Manifest.permission.ACCESS_FINE_LOCATION;
+                permissions[1] = android.Manifest.permission.ACCESS_COARSE_LOCATION;
+                requestPermissions(permissions, Constants.MY_LOCATION_PERMISSIONS_REQUEST_CODE);
+            } else {
+                mMap.setMyLocationEnabled(true);
+            }
+        }else {
+            mMap.setMyLocationEnabled(true);
+        }
+    }
+
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == Constants.MY_LOCATION_PERMISSIONS_REQUEST_CODE) {
+            for (int result : grantResults) {
+                if (result == PackageManager.PERMISSION_GRANTED) {
+                    drawMyLocation();
+                    break;
+                }
+            }
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.maps_activity_menu, menu);
+        return true;
     }
 }

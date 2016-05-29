@@ -13,5 +13,10 @@ public class Constants {
     public static final String SERVER_URL = "http://109.120.189.182";
     public static final String PREFIX = "api/v1";
 
+    //settings
+    public static final String STATIONS_lAST_UPDATE_KEY = "stationsLastLoadKey";
+
+    //misc
+    public static final long STATIONS_UPDATE_PERIOD = 4 * 60 * 60 * 1000; //4 hours
 
 }

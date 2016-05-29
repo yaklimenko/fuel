@@ -3,15 +3,17 @@ package ru.yaklimenko.fuel.db;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Environment;
-import android.util.Log;
 
 import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
 import com.j256.ormlite.support.ConnectionSource;
+import com.j256.ormlite.table.TableUtils;
 
 import java.io.File;
-import java.util.List;
+import java.sql.SQLException;
 
-import ru.yaklimenko.fuel.utils.ReflectionsUtil;
+import ru.yaklimenko.fuel.db.entities.FillingStation;
+import ru.yaklimenko.fuel.db.entities.Fuel;
+import ru.yaklimenko.fuel.db.entities.FuelCategory;
 
 /**
  * Created by Антон on 21.05.2016.
@@ -52,14 +54,15 @@ public class DBHelper extends OrmLiteSqliteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase database, ConnectionSource connectionSource) {
-        Log.d(TAG, "onCreate: ");
-        List<Class> tableClasses;
         try {
-            tableClasses = ReflectionsUtil.getClasses("ru.yaklimenko.fuel.db.entities");
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
+            TableUtils.createTable(getConnectionSource(), Fuel.class);
+            TableUtils.createTable(getConnectionSource(), FillingStation.class);
+            TableUtils.createTable(getConnectionSource(), FuelCategory.class);
+        } catch (SQLException e) {
+            throw new IllegalStateException("cannot create needed tables", e);
         }
-        String zu = "";
+
+
     }
 
     @Override

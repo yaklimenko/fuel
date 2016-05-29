@@ -5,12 +5,12 @@
         android:id="@+id/refreshStations"
         android:icon="@drawable/ic_refresh"
         android:title="@string/refresh_stations"
-        custom:showAsAction="ifRoom"
+        android:showAsAction="ifRoom"
         />
     <item
         android:id="@+id/filterFuel"
         android:icon="@drawable/pick_fuel"
         android:title="@string/pick_a_fuel_type"
-        custom:showAsAction="ifRoom"
+        android:showAsAction="ifRoom"
         />
 </menu>

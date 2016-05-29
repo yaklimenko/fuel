@@ -13,6 +13,8 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -36,7 +38,6 @@ public class FuelStationsMapActivity extends Activity implements OnMapReadyCallb
         MapFragment mapFragment = (MapFragment) getFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-
     }
 
 
@@ -134,9 +135,9 @@ public class FuelStationsMapActivity extends Activity implements OnMapReadyCallb
     }
 
     private void refreshFillingStations() {
-        new DataLoader().requestFillingStations(new DataLoader.OnFillingStationsGotListener() {
+        new DataLoader().getStations(this, new DataLoader.OnDataGotListener() {
             @Override
-            public void onFillingStationsGot(List<FillingStation> fillingStations) {
+            public void onDataLoaded(List<FillingStation> fillingStations) {
                 setStations(fillingStations);
             }
         });
@@ -148,12 +149,14 @@ public class FuelStationsMapActivity extends Activity implements OnMapReadyCallb
             marker.remove();
         }
         stationsMarkers.clear();
+        BitmapDescriptor descriptor = BitmapDescriptorFactory.fromResource(R.mipmap.pin);
         for (FillingStation fillingStation : stations) {
             LatLng stationPosition = new LatLng(fillingStation.latitude, fillingStation.longitude);
             stationsMarkers.add(
                     mMap.addMarker(new MarkerOptions()
                             .position(stationPosition)
                             .title(fillingStation.name)
+                            .icon(descriptor)
                     )
             );
         }

@@ -8,10 +8,13 @@ import com.j256.ormlite.table.DatabaseTable;
  */
 @DatabaseTable
 public class Fuel {
+
+    public static final String COL_STATION = "stationId";
+
     @DatabaseField(generatedId = true)
     public int id;
 
-    @DatabaseField(index = true)
+    @DatabaseField(index = true, columnName = COL_STATION)
     public int stationId;
 
     @DatabaseField

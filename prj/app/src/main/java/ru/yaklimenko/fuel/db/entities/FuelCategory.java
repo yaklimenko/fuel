@@ -9,6 +9,8 @@ import com.j256.ormlite.table.DatabaseTable;
 @DatabaseTable
 public class FuelCategory {
 
+    public static final String REQUEST_URL = "category";
+
     @DatabaseField(id = true)
     public int id;
 

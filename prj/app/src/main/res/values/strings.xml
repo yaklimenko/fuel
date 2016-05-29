@@ -2,4 +2,7 @@
     <string name="app_name">Fuel</string>
     <string name="title_activity_fuel_stations_map">Fuel stations</string>
     <string name="pick_a_fuel_type">pick a fuel type</string>
+    <string name="refresh_stations">refresh stations</string>
+
+
 </resources>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Generated with http://android-holo-colors.com -->
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <style name="FuelProject" parent="@style/_FuelProject"/>
+
+  <style name="_FuelProject" parent="android:Theme.Holo.Light">
+
+    <item name="android:editTextBackground">@drawable/fuelproject_edit_text_holo_light</item>
+
+    <item name="android:textColorHighlight">#992b2c2d</item>
+    <item name="android:textSelectHandleLeft">@drawable/fuelproject_text_select_handle_left</item>
+    <item name="android:textSelectHandleRight">@drawable/fuelproject_text_select_handle_right</item>
+    <item name="android:textSelectHandle">@drawable/fuelproject_text_select_handle_middle</item>
+
+    <item name="android:autoCompleteTextViewStyle">@style/AutoCompleteTextViewFuelProject</item>
+
+    <item name="android:listChoiceIndicatorMultiple">@drawable/fuelproject_btn_check_holo_light</item>
+
+    <item name="android:listChoiceIndicatorSingle">@drawable/fuelproject_btn_radio_holo_light</item>
+
+    <item name="android:buttonStyle">@style/ButtonFuelProject</item>
+
+    <item name="android:imageButtonStyle">@style/ImageButtonFuelProject</item>
+
+    <item name="android:dropDownSpinnerStyle">@style/SpinnerFuelProject</item>
+
+    <item name="android:progressBarStyleHorizontal">@style/ProgressBarFuelProject</item>
+
+    <item name="android:seekBarStyle">@style/SeekBarFuelProject</item>
+
+    <item name="android:ratingBarStyle">@style/RatingBarFuelProject</item>
+
+    <item name="android:ratingBarStyleIndicator">@style/RatingBarBigFuelProject</item>
+
+    <item name="android:ratingBarStyleSmall">@style/RatingBarSmallFuelProject</item>
+
+    <item name="android:buttonStyleToggle">@style/ToggleFuelProject</item>
+
+    <item name="android:listChoiceBackgroundIndicator">@drawable/fuelproject_list_selector_holo_light</item>
+
+    <item name="android:activatedBackgroundIndicator">@drawable/fuelproject_activated_background_holo_light</item>
+
+    <item name="android:fastScrollThumbDrawable">@drawable/fuelproject_fastscroll_thumb_holo</item>
+
+  </style>
+
+</resources>

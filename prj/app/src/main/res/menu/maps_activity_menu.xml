@@ -2,9 +2,15 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/fuelType"
+        android:id="@+id/refreshStations"
+        android:icon="@drawable/ic_refresh"
+        android:title="@string/refresh_stations"
+        custom:showAsAction="ifRoom"
+        />
+    <item
+        android:id="@+id/filterFuel"
         android:icon="@drawable/pick_fuel"
         android:title="@string/pick_a_fuel_type"
-        custom:showAsAction="always"
+        custom:showAsAction="ifRoom"
         />
 </menu>

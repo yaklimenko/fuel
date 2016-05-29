@@ -7,6 +7,8 @@ import com.j256.ormlite.table.DatabaseTable;
 @DatabaseTable
 public class FillingStation {
 
+    public static final String REQUEST_URL = "fillingstation";
+
     @DatabaseField(id = true, dataType = DataType.INTEGER)
     public int id;
 
@@ -21,6 +23,8 @@ public class FillingStation {
 
     @DatabaseField(canBeNull = false)
     public Double longitude;
+
+    public Fuel[] fuels;
 
 
 }

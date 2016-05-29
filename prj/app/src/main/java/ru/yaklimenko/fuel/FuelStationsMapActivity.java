@@ -7,16 +7,26 @@ import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import ru.yaklimenko.fuel.db.entities.FillingStation;
+import ru.yaklimenko.fuel.net.DataLoader;
 
 public class FuelStationsMapActivity extends Activity implements OnMapReadyCallback {
     public static final String TAG = FuelStationsMapActivity.class.getSimpleName();
     private GoogleMap mMap;
+    private List<Marker> stationsMarkers = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,7 +56,8 @@ public class FuelStationsMapActivity extends Activity implements OnMapReadyCallb
 
         // Add a marker in Sydney and move the camera
         LatLng tomsk = new LatLng(56.492d, 85d);
-        //mMap.addMarker(new MarkerOptions().position(tomsk).title("Tomsk"));
+//        mMap.addMarker(new MarkerOptions().position(tomsk).title("Tomsk"));
+
         mMap.moveCamera(CameraUpdateFactory.newLatLng(tomsk));
         mMap.moveCamera(CameraUpdateFactory.zoomTo(12f));
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
@@ -56,22 +67,19 @@ public class FuelStationsMapActivity extends Activity implements OnMapReadyCallb
             }
         });
         drawMyLocation();
-
+        refreshFillingStations();
     }
 
     private void drawMyLocation() {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-            boolean fineLocationGranted = true;
-
-            fineLocationGranted = checkSelfPermission(
+            boolean fineLocationGranted = checkSelfPermission(
                     android.Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED;
 
-            boolean coarseLocationGranted = false;
-
-            coarseLocationGranted = checkSelfPermission(
+            boolean coarseLocationGranted = checkSelfPermission(
                             android.Manifest.permission.ACCESS_COARSE_LOCATION
                     ) == PackageManager.PERMISSION_GRANTED;
+
             if (!fineLocationGranted && !coarseLocationGranted) {
                 String[] permissions = new String[2];
                 permissions[0] = android.Manifest.permission.ACCESS_FINE_LOCATION;
@@ -80,7 +88,7 @@ public class FuelStationsMapActivity extends Activity implements OnMapReadyCallb
             } else {
                 mMap.setMyLocationEnabled(true);
             }
-        }else {
+        } else {
             mMap.setMyLocationEnabled(true);
         }
     }
@@ -106,4 +114,51 @@ public class FuelStationsMapActivity extends Activity implements OnMapReadyCallb
         inflater.inflate(R.menu.maps_activity_menu, menu);
         return true;
     }
+
+    @Override
+    public boolean onMenuItemSelected(int featureId, MenuItem item) {
+        if (item.getItemId() == R.id.refreshStations){
+            onRefreshStationsMenuItemClicked();
+        } else if (item.getItemId() == R.id.filterFuel) {
+            onFuelSelectMenuItemClicked();
+        }
+        return super.onMenuItemSelected(featureId, item);
+    }
+
+    public void onRefreshStationsMenuItemClicked () {
+        refreshFillingStations();
+    }
+
+    public void onFuelSelectMenuItemClicked() {
+        String zu = "";
+    }
+
+    private void refreshFillingStations() {
+        new DataLoader().requestFillingStations(new DataLoader.OnFillingStationsGotListener() {
+            @Override
+            public void onFillingStationsGot(List<FillingStation> fillingStations) {
+                setStations(fillingStations);
+            }
+        });
+    }
+
+    private void setStations(List<FillingStation> stations) {
+        Log.d(TAG, "setStations: trying to refresh stations on map");
+        for (Marker marker : stationsMarkers) {
+            marker.remove();
+        }
+        stationsMarkers.clear();
+        for (FillingStation fillingStation : stations) {
+            LatLng stationPosition = new LatLng(fillingStation.latitude, fillingStation.longitude);
+            stationsMarkers.add(
+                    mMap.addMarker(new MarkerOptions()
+                            .position(stationPosition)
+                            .title(fillingStation.name)
+                    )
+            );
+        }
+
+    }
+
+
 }

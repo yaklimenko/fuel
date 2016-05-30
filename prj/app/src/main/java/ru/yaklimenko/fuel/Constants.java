@@ -1,10 +1,15 @@
 package ru.yaklimenko.fuel;
 
+import com.google.android.gms.maps.model.LatLng;
+
 /**
  * Created by Антон on 27.05.2016.
  * Constants
  */
 public class Constants {
+
+    //locations
+    public static final LatLng TOMSK_LATLNG = new LatLng(56.492d, 85d);
 
     //request codes
     public static final int MY_LOCATION_PERMISSIONS_REQUEST_CODE = 101;

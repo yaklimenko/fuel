@@ -1,107 +1,132 @@
 package ru.yaklimenko.fuel;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
+import android.view.View;
 
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapFragment;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
 
-import java.util.ArrayList;
-import java.util.List;
+public class FuelStationsMapActivity
+        extends Activity
+        implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
-import ru.yaklimenko.fuel.db.entities.FillingStation;
-import ru.yaklimenko.fuel.net.DataLoader;
-
-public class FuelStationsMapActivity extends Activity implements OnMapReadyCallback {
     public static final String TAG = FuelStationsMapActivity.class.getSimpleName();
-    private GoogleMap mMap;
-    private List<Marker> stationsMarkers = new ArrayList<>();
+    public static final String WAS_LOADED =
+            FuelStationsMapActivity.class.getCanonicalName() + ".OnAlreadyBeenLoaded";
+
+    private boolean wasLoaded;
+
+    private GoogleApiClient mGoogleApiClient;
+    private Location mLastLocation;
+    private OnLocationGotListener onLocationGotListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_fuel_stations_map);
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        MapFragment mapFragment = (MapFragment) getFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
+        readSavedValues(savedInstanceState);
+        if (wasLoaded) {
+            findViewById(R.id.loadingPanel).setVisibility(View.GONE);
+        }
+        tryGetUsersLocation();
+
+
     }
 
+    private void readSavedValues(Bundle savedInstanceState) {
+        if (savedInstanceState == null) {
+            return;
+        }
+        wasLoaded = savedInstanceState.getBoolean(WAS_LOADED);
+    }
 
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
     @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
-        mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-
-        // Add a marker in Sydney and move the camera
-        LatLng tomsk = new LatLng(56.492d, 85d);
-//        mMap.addMarker(new MarkerOptions().position(tomsk).title("Tomsk"));
-
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(tomsk));
-        mMap.moveCamera(CameraUpdateFactory.zoomTo(12f));
-        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
-            @Override
-            public void onMapClick(LatLng latLng) {
-                Log.d(TAG, "onMapClick: " + latLng.toString());
-            }
-        });
-        drawMyLocation();
-        refreshFillingStations();
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putBoolean(WAS_LOADED, wasLoaded);
+        super.onSaveInstanceState(outState);
     }
 
-    private void drawMyLocation() {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-            boolean fineLocationGranted = checkSelfPermission(
-                    android.Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED;
 
-            boolean coarseLocationGranted = checkSelfPermission(
-                            android.Manifest.permission.ACCESS_COARSE_LOCATION
-                    ) == PackageManager.PERMISSION_GRANTED;
-
-            if (!fineLocationGranted && !coarseLocationGranted) {
-                String[] permissions = new String[2];
-                permissions[0] = android.Manifest.permission.ACCESS_FINE_LOCATION;
-                permissions[1] = android.Manifest.permission.ACCESS_COARSE_LOCATION;
-                requestPermissions(permissions, Constants.MY_LOCATION_PERMISSIONS_REQUEST_CODE);
-            } else {
-                mMap.setMyLocationEnabled(true);
-            }
-        } else {
-            mMap.setMyLocationEnabled(true);
+    private void tryGetUsersLocation() {
+        if (onLocationGotListener == null) {
+            return;
+        }
+        if (mGoogleApiClient == null) {
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .build();
         }
     }
 
-
+    @Override
+    protected void onStart() {
+        if (mGoogleApiClient != null) {
+            mGoogleApiClient.connect();
+        }
+        super.onStart();
+    }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    protected void onStop() {
+        if (mGoogleApiClient != null) {
+            mGoogleApiClient.disconnect();
+        }
+        super.onStop();
+    }
+
+    @Override
+    public void onConnected(Bundle connectionHint) {
+        getLastLocation();
+    }
+
+    private void getLastLocation() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            boolean fineLocationGranted = checkSelfPermission(
+                    Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED;
+
+            boolean coarseLocationGranted = checkSelfPermission(
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED;
+
+            if (!fineLocationGranted && !coarseLocationGranted) {
+                String[] permissions = new String[2];
+                permissions[0] = Manifest.permission.ACCESS_FINE_LOCATION;
+                permissions[1] = Manifest.permission.ACCESS_COARSE_LOCATION;
+                requestPermissions(permissions, Constants.MY_LOCATION_PERMISSIONS_REQUEST_CODE);
+            } else {
+                mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
+                        mGoogleApiClient);
+                if (onLocationGotListener != null) {
+                    onLocationGotListener.onLocationGot(mLastLocation);
+                }
+            }
+        }
+
+
+        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
+                mGoogleApiClient);
+        if (onLocationGotListener != null) {
+            onLocationGotListener.onLocationGot(mLastLocation);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(
+            int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults
+    ) {
         if (requestCode == Constants.MY_LOCATION_PERMISSIONS_REQUEST_CODE) {
             for (int result : grantResults) {
                 if (result == PackageManager.PERMISSION_GRANTED) {
-                    drawMyLocation();
+                    getLastLocation();
                     break;
                 }
             }
@@ -110,58 +135,25 @@ public class FuelStationsMapActivity extends Activity implements OnMapReadyCallb
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.maps_activity_menu, menu);
-        return true;
+    public void onConnectionSuspended(int i) {
+
     }
 
     @Override
-    public boolean onMenuItemSelected(int featureId, MenuItem item) {
-        if (item.getItemId() == R.id.refreshStations){
-            onRefreshStationsMenuItemClicked();
-        } else if (item.getItemId() == R.id.filterFuel) {
-            onFuelSelectMenuItemClicked();
-        }
-        return super.onMenuItemSelected(featureId, item);
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        //todo show some sad dialog
     }
 
-    public void onRefreshStationsMenuItemClicked () {
-        refreshFillingStations();
+    public void setOnLocationGotListener(OnLocationGotListener onLocationGotListener) {
+        this.onLocationGotListener = onLocationGotListener;
     }
 
-    public void onFuelSelectMenuItemClicked() {
-        String zu = "";
+    public interface OnLocationGotListener {
+        void onLocationGot(Location location);
     }
 
-    private void refreshFillingStations() {
-        new DataLoader().getStations(this, new DataLoader.OnDataGotListener() {
-            @Override
-            public void onDataLoaded(List<FillingStation> fillingStations) {
-                setStations(fillingStations);
-            }
-        });
+    public void onDataLoaded () {
+        findViewById(R.id.loadingPanel).setVisibility(View.GONE);
+        wasLoaded = true;
     }
-
-    private void setStations(List<FillingStation> stations) {
-        Log.d(TAG, "setStations: trying to refresh stations on map");
-        for (Marker marker : stationsMarkers) {
-            marker.remove();
-        }
-        stationsMarkers.clear();
-        BitmapDescriptor descriptor = BitmapDescriptorFactory.fromResource(R.mipmap.pin);
-        for (FillingStation fillingStation : stations) {
-            LatLng stationPosition = new LatLng(fillingStation.latitude, fillingStation.longitude);
-            stationsMarkers.add(
-                    mMap.addMarker(new MarkerOptions()
-                            .position(stationPosition)
-                            .title(fillingStation.name)
-                            .icon(descriptor)
-                    )
-            );
-        }
-
-    }
-
-
 }

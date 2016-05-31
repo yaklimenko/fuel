@@ -46,4 +46,13 @@ public class FuelDao extends FuelBaseDao<Fuel, Integer> {
         });
 
     }
+
+    public List<Fuel> getByCategory (int fuelCategoryId) {
+        try {
+            return queryBuilder().where().eq(Fuel.COL_CATEGORY, fuelCategoryId).query();
+        } catch (SQLException e) {
+            throw new IllegalStateException("cannot get fuel list", e);
+        }
+    }
+
 }

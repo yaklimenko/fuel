@@ -1,5 +1,6 @@
 package ru.yaklimenko.fuel.db.entities;
 
+import com.google.gson.annotations.SerializedName;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
@@ -10,6 +11,7 @@ import com.j256.ormlite.table.DatabaseTable;
 public class Fuel {
 
     public static final String COL_STATION = "stationId";
+    public static final String COL_CATEGORY = "categoryId";
 
     @DatabaseField(generatedId = true)
     public int id;
@@ -17,7 +19,8 @@ public class Fuel {
     @DatabaseField(index = true, columnName = COL_STATION)
     public int stationId;
 
-    @DatabaseField
+    @SerializedName("category_id")
+    @DatabaseField (columnName = COL_CATEGORY)
     public int categoryId;
 
     @DatabaseField

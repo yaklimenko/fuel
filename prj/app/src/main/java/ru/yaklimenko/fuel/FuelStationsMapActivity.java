@@ -6,11 +6,14 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.view.View;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
+
+import ru.yaklimenko.fuel.db.entities.FuelCategory;
 
 public class FuelStationsMapActivity
         extends Activity
@@ -25,6 +28,7 @@ public class FuelStationsMapActivity
     private GoogleApiClient mGoogleApiClient;
     private Location mLastLocation;
     private OnLocationGotListener onLocationGotListener;
+    private OnFuelFilteredListener onFuelFilteredListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,8 +39,6 @@ public class FuelStationsMapActivity
             findViewById(R.id.loadingPanel).setVisibility(View.GONE);
         }
         tryGetUsersLocation();
-
-
     }
 
     private void readSavedValues(Bundle savedInstanceState) {
@@ -144,16 +146,31 @@ public class FuelStationsMapActivity
         //todo show some sad dialog
     }
 
+    public void onDataLoaded () {
+        findViewById(R.id.loadingPanel).setVisibility(View.GONE);
+        wasLoaded = true;
+    }
+
+    public void onFuelFiltered(@Nullable FuelCategory fuelCategory) {
+        if (onFuelFilteredListener != null) {
+            onFuelFilteredListener.onFuelFiltered(fuelCategory);
+        }
+    }
+
     public void setOnLocationGotListener(OnLocationGotListener onLocationGotListener) {
         this.onLocationGotListener = onLocationGotListener;
     }
 
-    public interface OnLocationGotListener {
-        void onLocationGot(Location location);
+    public void setOnFuelFilteredListener(OnFuelFilteredListener onFuelFilteredListener) {
+        this.onFuelFilteredListener = onFuelFilteredListener;
     }
 
-    public void onDataLoaded () {
-        findViewById(R.id.loadingPanel).setVisibility(View.GONE);
-        wasLoaded = true;
+
+    public interface OnFuelFilteredListener{
+        void onFuelFiltered(FuelCategory fuelCategory);
+    }
+
+    public interface OnLocationGotListener {
+        void onLocationGot(Location location);
     }
 }

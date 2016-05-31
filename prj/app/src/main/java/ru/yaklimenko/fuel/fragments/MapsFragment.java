@@ -38,8 +38,11 @@ import ru.yaklimenko.fuel.FuelApplicationPreferences;
 import ru.yaklimenko.fuel.FuelStationsMapActivity;
 import ru.yaklimenko.fuel.R;
 import ru.yaklimenko.fuel.db.entities.FillingStation;
+import ru.yaklimenko.fuel.db.entities.FuelCategory;
 import ru.yaklimenko.fuel.dialogs.ConnectionProblemDialogFragment;
+import ru.yaklimenko.fuel.dialogs.FilterFuelDialogFragment;
 import ru.yaklimenko.fuel.net.DataLoader;
+import ru.yaklimenko.fuel.services.FillingStationsService;
 
 /**
  * Created by Антон on 30.05.2016.
@@ -50,10 +53,9 @@ public class MapsFragment
         implements OnMapReadyCallback, FuelStationsMapActivity.OnLocationGotListener {
 
     public static final String TAG = MapsFragment.class.getSimpleName();
-    public static final String CAMERA_POSITION_KEY =
-            MapsFragment.class.getCanonicalName() + ".CameraPositionKey";
-    public static final String STATIONS_KEY =
-            MapsFragment.class.getCanonicalName() + ".StationsKey";
+    public static final String CAMERA_POSITION_KEY = "CameraPositionKey";
+    public static final String STATIONS_KEY = "StationsKey";
+    public static final String FUEL_CATEGORY_KEY = "FuelCategoryKey";
 
     private GoogleMap mMap;
 
@@ -63,14 +65,23 @@ public class MapsFragment
     boolean isMapReady, isLocationGot, isFirstTimeCameraConfigured = false;
     Location usersLocation;
     CameraPosition usersCameraPosition;
-    MenuItem refreshMenuItem;
+
     boolean isRefreshButtonVisible = false;
+    boolean isFilterFuelButtonVisible = false;
+
+    FuelCategory fuelCategory;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
-        //setRetainInstance(true);
+        FuelStationsMapActivity activity = (FuelStationsMapActivity)getActivity();
+        activity.setOnFuelFilteredListener(new FuelStationsMapActivity.OnFuelFilteredListener() {
+            @Override
+            public void onFuelFiltered(FuelCategory fuelCategory) {
+                MapsFragment.this.fuelCategory = fuelCategory;
+                setStations(stations);
+            }
+        });
     }
 
     @Nullable
@@ -108,6 +119,10 @@ public class MapsFragment
         if (savedInstanceState.containsKey(CAMERA_POSITION_KEY)) {
             isFirstTimeCameraConfigured = true;
             usersCameraPosition = savedInstanceState.getParcelable(CAMERA_POSITION_KEY);
+        }
+
+        if (savedInstanceState.containsKey(FUEL_CATEGORY_KEY)) {
+            fuelCategory = (FuelCategory) savedInstanceState.getSerializable(FUEL_CATEGORY_KEY);
         }
     }
 
@@ -157,7 +172,6 @@ public class MapsFragment
     private void moveToSavedPosition() {
         mMap.moveCamera(CameraUpdateFactory.newCameraPosition(usersCameraPosition));
         usersCameraPosition = null;
-        return;
     }
 
     private void moveToMyLocation(Location location) {
@@ -188,8 +202,10 @@ public class MapsFragment
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.maps_fragment_menu, menu);
-        refreshMenuItem = menu.findItem(R.id.refreshStations);
+        MenuItem refreshMenuItem = menu.findItem(R.id.refreshStations);
         refreshMenuItem.setVisible(isRefreshButtonVisible);
+        MenuItem fuelTypeMenuItem = menu.findItem(R.id.filterFuel);
+        fuelTypeMenuItem.setVisible(isFilterFuelButtonVisible);
     }
 
     @Override
@@ -212,6 +228,11 @@ public class MapsFragment
         getActivity().invalidateOptionsMenu();
     }
 
+    private void setFilterFuelButtonVisibility(boolean isVisible) {
+        isFilterFuelButtonVisible = isVisible;
+        getActivity().invalidateOptionsMenu();
+    }
+
 
 
     public void onRefreshStationsMenuItemClicked () {
@@ -219,7 +240,8 @@ public class MapsFragment
     }
 
     public void onFuelSelectMenuItemClicked() {
-        String zu = "";
+        FilterFuelDialogFragment.getInstance(fuelCategory == null ? null : fuelCategory.id)
+                .show(getFragmentManager(), FilterFuelDialogFragment.TAG);
     }
 
     private void refreshFillingStations(boolean forceUpdate) {
@@ -264,7 +286,18 @@ public class MapsFragment
         }
         stationsMarkers.clear();
         BitmapDescriptor descriptor = BitmapDescriptorFactory.fromResource(R.mipmap.pin);
-        for (FillingStation fillingStation : stations) {
+
+        List<FillingStation> filteredStations;
+        if (fuelCategory != null) {
+            filteredStations = FillingStationsService.filterStationsByFuelCategory(
+                    stations, fuelCategory
+            );
+        } else {
+            filteredStations = stations;
+        }
+
+        for (FillingStation fillingStation : filteredStations) {
+
             LatLng stationPosition = new LatLng(fillingStation.latitude, fillingStation.longitude);
             Marker marker = mMap.addMarker(new MarkerOptions()
                     .position(stationPosition)
@@ -275,7 +308,7 @@ public class MapsFragment
             );
             stationsMarkers.add(marker);
         }
-
+        setFilterFuelButtonVisibility(true);
     }
 
     @Override
@@ -296,6 +329,10 @@ public class MapsFragment
         if (mMap != null) {
             CameraPosition position = mMap.getCameraPosition();
             outState.putParcelable(CAMERA_POSITION_KEY, position);
+        }
+
+        if (fuelCategory != null) {
+            outState.putSerializable(FUEL_CATEGORY_KEY, fuelCategory);
         }
         super.onSaveInstanceState(outState);
     }

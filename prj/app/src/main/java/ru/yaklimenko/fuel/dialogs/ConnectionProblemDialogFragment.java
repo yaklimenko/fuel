@@ -34,7 +34,6 @@ public class ConnectionProblemDialogFragment extends DialogFragment {
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-
         return new AlertDialog.Builder(getActivity())
                 .setTitle(R.string.dialog_title_error)
                 .setMessage(messageRes)

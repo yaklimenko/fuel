@@ -1,8 +1,15 @@
 <resources>
     <string name="app_name">Fuel</string>
     <string name="title_activity_fuel_stations_map">Fuel stations</string>
-    <string name="pick_a_fuel_type">pick a fuel type</string>
-    <string name="refresh_stations">refresh stations</string>
+    <string name="pick_a_fuel_type">Выбрать тип топлива</string>
+    <string name="refresh_stations">Обновить станции</string>
+
+    <!-- диалоги -->
+    <string name="dialog_title_error">Ошибка</string>
+    <string name="dialog_text_server_unreachable">Сервер временно недоступен, попробуйте позже</string>
+    <string name="dialog_text_connection_problem">Ошибка соединения с сервером. Проверьте настройки подключения к сети интернет.</string>
+    <string name="dialog_ok">ок</string>
+
 
 
 </resources>

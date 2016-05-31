@@ -1,8 +1,6 @@
 package ru.yaklimenko.fuel.net;
 
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
@@ -13,13 +11,13 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import ru.yaklimenko.fuel.Constants;
+import ru.yaklimenko.fuel.FuelApplicationPreferences;
 import ru.yaklimenko.fuel.db.DbHelperManager;
 import ru.yaklimenko.fuel.db.dao.FillingStationDao;
 import ru.yaklimenko.fuel.db.dao.FuelCategoryDao;
@@ -51,9 +49,8 @@ public class DataLoader {
     ) {
         //decide what to do
         this.context = context;
-        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
-        long lastUpdateDateTime = settings.getLong(Constants.STATIONS_lAST_UPDATE_KEY, 0L);
-        if (new Date().getTime() - lastUpdateDateTime > Constants.STATIONS_UPDATE_PERIOD) {
+
+        if (!new FuelApplicationPreferences(context).areStationsActual()) {
             //get from server
             requestFillingStations(dataGotListener);
         } else {
@@ -94,10 +91,12 @@ public class DataLoader {
                     private int responsesReceived = 0;
 
                     @Override
-                    public void onCompleted() {/*empty*/}
+                    public void onCompleted() {
+                        new FuelApplicationPreferences(context).updateStationsLastCheckTime();
+                    }
                     @Override
                     public void onError(Throwable e) {
-                        throw new IllegalStateException("cannot get data", e);
+                        dataGotListener.onError(e);
                     }
 
                     @Override
@@ -109,7 +108,7 @@ public class DataLoader {
                             rewriteFillingStationsInDb(response, new OnFillingStationsStoredListener() {
                                 @Override
                                 public void onStationsStored(List<FillingStation> fillingStations) {
-                                    updateFillingStationsLastLoadTime();
+                                    new FuelApplicationPreferences(context).updateStationsLastUpdateTime();
                                     dataGotListener.onDataLoaded(fillingStations);
                                 }
                             });
@@ -139,13 +138,6 @@ public class DataLoader {
                 Log.e(TAG, "call: ", e);
             }
         }
-    }
-
-    private void updateFillingStationsLastLoadTime() {
-        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
-        settings.edit()
-                .putLong(Constants.STATIONS_lAST_UPDATE_KEY, new Date().getTime())
-                .apply();
     }
 
     private void rewriteFillingStationsInDb(
@@ -248,6 +240,7 @@ public class DataLoader {
 
     public interface OnDataGotListener {
         void onDataLoaded(List<FillingStation> fillingStations);
+        void onError(Throwable e);
     }
 
     public interface OnFillingStationsStoredListener {

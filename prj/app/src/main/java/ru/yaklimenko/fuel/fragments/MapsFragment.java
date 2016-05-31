@@ -29,13 +29,16 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
+import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
 
 import ru.yaklimenko.fuel.Constants;
+import ru.yaklimenko.fuel.FuelApplicationPreferences;
 import ru.yaklimenko.fuel.FuelStationsMapActivity;
 import ru.yaklimenko.fuel.R;
 import ru.yaklimenko.fuel.db.entities.FillingStation;
+import ru.yaklimenko.fuel.dialogs.ConnectionProblemDialogFragment;
 import ru.yaklimenko.fuel.net.DataLoader;
 
 /**
@@ -60,6 +63,8 @@ public class MapsFragment
     boolean isMapReady, isLocationGot, isFirstTimeCameraConfigured = false;
     Location usersLocation;
     CameraPosition usersCameraPosition;
+    MenuItem refreshMenuItem;
+    boolean isRefreshButtonVisible = false;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -80,7 +85,13 @@ public class MapsFragment
         if (!isFirstTimeCameraConfigured) {
             ((FuelStationsMapActivity) getActivity()).setOnLocationGotListener(this);
         }
+        setHasOptionsMenu(true);
         return root;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
     }
 
     private void readSavedValues(Bundle savedInstanceState) {
@@ -119,8 +130,9 @@ public class MapsFragment
 
         configCamera();
 
-
-        refreshFillingStations();
+        if (new FuelApplicationPreferences(getActivity()).isNeedToCheckStations())  {
+            refreshFillingStations(false);
+        }
     }
 
     private void configCamera() {
@@ -175,7 +187,9 @@ public class MapsFragment
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.maps_activity_menu, menu);
+        inflater.inflate(R.menu.maps_fragment_menu, menu);
+        refreshMenuItem = menu.findItem(R.id.refreshStations);
+        refreshMenuItem.setVisible(isRefreshButtonVisible);
     }
 
     @Override
@@ -193,17 +207,23 @@ public class MapsFragment
 
     }
 
+    private void setRefreshButtonVisibility(boolean isVisible) {
+        isRefreshButtonVisible = isVisible;
+        getActivity().invalidateOptionsMenu();
+    }
+
+
 
     public void onRefreshStationsMenuItemClicked () {
-        refreshFillingStations();
+        refreshFillingStations(true);
     }
 
     public void onFuelSelectMenuItemClicked() {
         String zu = "";
     }
 
-    private void refreshFillingStations() {
-        if (stations != null && !stations.isEmpty()) {
+    private void refreshFillingStations(boolean forceUpdate) {
+        if (!forceUpdate && stations != null && !stations.isEmpty()) {
             setStations(stations);
         }
         new DataLoader().getStations(getActivity(), new DataLoader.OnDataGotListener() {
@@ -211,7 +231,29 @@ public class MapsFragment
             public void onDataLoaded(List<FillingStation> fillingStations) {
                 setStations(fillingStations);
             }
+
+            @Override
+            public void onError(Throwable e) {
+                if (e instanceof ConnectException) {
+                    showConnectionProblemDialog();
+                } else {
+                    showProblemDialog();
+                }
+            }
         });
+        setRefreshButtonVisibility(false);
+    }
+
+    private void showProblemDialog() {
+        ConnectionProblemDialogFragment.getInstance(R.string.dialog_text_server_unreachable)
+                .show(getFragmentManager(), ConnectionProblemDialogFragment.TAG);
+        setRefreshButtonVisibility(true);
+    }
+
+    private void showConnectionProblemDialog() {
+        ConnectionProblemDialogFragment.getInstance(R.string.dialog_text_connection_problem)
+                .show(getFragmentManager(), ConnectionProblemDialogFragment.TAG);
+        setRefreshButtonVisibility(true);
     }
 
     private void setStations(List<FillingStation> stations) {

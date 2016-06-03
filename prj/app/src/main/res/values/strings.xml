@@ -13,5 +13,8 @@
     <string name="dialog_fuelfilter_title">Выберите тип топлива</string>
     <string name="dialog_fuelfilter_clear_button">очистить выбор</string>
 
+    <!-- главное меню -->
+    <string name="app_mode_map">Карта</string>
+    <string name="app_mode_list">Список</string>
 
 </resources>

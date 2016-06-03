@@ -1,44 +1,90 @@
 package ru.yaklimenko.fuel;
 
-import android.Manifest;
 import android.app.Activity;
-import android.content.pm.PackageManager;
-import android.location.Location;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.widget.DrawerLayout;
+import android.util.Log;
 import android.view.View;
-
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationServices;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 
 import ru.yaklimenko.fuel.db.entities.FuelCategory;
+import ru.yaklimenko.fuel.fragments.ListFragment;
+import ru.yaklimenko.fuel.fragments.MapsFragment;
 
-public class FuelStationsMapActivity
-        extends Activity
-        implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class FuelStationsMapActivity extends Activity implements MapsFragment.OnMapLoadedListener {
 
-    public static final String TAG = FuelStationsMapActivity.class.getSimpleName();
+    public static final String TAG = "ActivityTestTag";
     public static final String WAS_LOADED =
             FuelStationsMapActivity.class.getCanonicalName() + ".OnAlreadyBeenLoaded";
 
     private boolean wasLoaded;
-
-    private GoogleApiClient mGoogleApiClient;
-    private Location mLastLocation;
-    private OnLocationGotListener onLocationGotListener;
     private OnFuelFilteredListener onFuelFilteredListener;
 
+    private View loadingPanel;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate: ");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_fuel_stations_map);
+        loadingPanel = findViewById(R.id.loadingPanel);
         readSavedValues(savedInstanceState);
-        if (wasLoaded) {
-            findViewById(R.id.loadingPanel).setVisibility(View.GONE);
+
+        String[] modes = getResources().getStringArray(R.array.app_modes);
+        DrawerLayout drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        ListView drawerList = (ListView) findViewById(R.id.left_drawer);
+
+        // Set the adapter for the list view
+        drawerList.setAdapter(new ArrayAdapter<String>(this,
+                R.layout.drawer_list_item, modes));
+        // Set the list's click listener
+        drawerList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                android.app.FragmentManager fManager = getFragmentManager();
+                if (position == 0) {
+                    fManager.beginTransaction()
+                            .replace(R.id.content_frame, new MapsFragment(), MapsFragment.TAG)
+                            .commit();
+
+                } else if (position == 1) {
+                    fManager.beginTransaction()
+                            .replace(R.id.content_frame, new ListFragment(), ListFragment.TAG)
+                            .addToBackStack(ListFragment.TAG)
+                            .commit();
+                }
+
+            }
+        });
+    }
+
+    @Override
+    protected void onStart() {
+        Log.d(TAG, "onStart: ");
+        super.onStart();
+        MapsFragment mapsFragment =
+                (MapsFragment)getFragmentManager().findFragmentById(R.id.mapsFragment);
+
+        if (mapsFragment != null) {
+            mapsFragment.setOnMapLoadedListener(this);
+        } else {
+            loadingPanel.setVisibility(View.GONE);
         }
-        tryGetUsersLocation();
+    }
+
+    @Override
+    protected void onResume() {
+        Log.d(TAG, "onResume: ");
+        super.onResume();
+    }
+
+    @Override
+    protected void onRestart() {
+        Log.d(TAG, "onRestart: ");
+        super.onRestart();
     }
 
     private void readSavedValues(Bundle savedInstanceState) {
@@ -46,6 +92,9 @@ public class FuelStationsMapActivity
             return;
         }
         wasLoaded = savedInstanceState.getBoolean(WAS_LOADED);
+        if (wasLoaded) {
+            loadingPanel.setVisibility(View.GONE);
+        }
     }
 
     @Override
@@ -55,114 +104,20 @@ public class FuelStationsMapActivity
     }
 
 
-    private void tryGetUsersLocation() {
-        if (onLocationGotListener == null) {
-            return;
-        }
-        if (mGoogleApiClient == null) {
-            mGoogleApiClient = new GoogleApiClient.Builder(this)
-                    .addConnectionCallbacks(this)
-                    .addOnConnectionFailedListener(this)
-                    .addApi(LocationServices.API)
-                    .build();
-        }
-    }
-
-    @Override
-    protected void onStart() {
-        if (mGoogleApiClient != null) {
-            mGoogleApiClient.connect();
-        }
-        super.onStart();
-    }
-
-    @Override
-    protected void onStop() {
-        if (mGoogleApiClient != null) {
-            mGoogleApiClient.disconnect();
-        }
-        super.onStop();
-    }
-
-    @Override
-    public void onConnected(Bundle connectionHint) {
-        getLastLocation();
-    }
-
-    private void getLastLocation() {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-            boolean fineLocationGranted = checkSelfPermission(
-                    Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED;
-
-            boolean coarseLocationGranted = checkSelfPermission(
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED;
-
-            if (!fineLocationGranted && !coarseLocationGranted) {
-                String[] permissions = new String[2];
-                permissions[0] = Manifest.permission.ACCESS_FINE_LOCATION;
-                permissions[1] = Manifest.permission.ACCESS_COARSE_LOCATION;
-                requestPermissions(permissions, Constants.MY_LOCATION_PERMISSIONS_REQUEST_CODE);
-            } else {
-                mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
-                        mGoogleApiClient);
-                if (onLocationGotListener != null) {
-                    onLocationGotListener.onLocationGot(mLastLocation);
-                }
-            }
-        }
-
-
-        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
-                mGoogleApiClient);
-        if (onLocationGotListener != null) {
-            onLocationGotListener.onLocationGot(mLastLocation);
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(
-            int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults
-    ) {
-        if (requestCode == Constants.MY_LOCATION_PERMISSIONS_REQUEST_CODE) {
-            for (int result : grantResults) {
-                if (result == PackageManager.PERMISSION_GRANTED) {
-                    getLastLocation();
-                    break;
-                }
-            }
-        }
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-
-    }
-
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        //todo show some sad dialog
-    }
-
-    public void onDataLoaded () {
-        findViewById(R.id.loadingPanel).setVisibility(View.GONE);
-        wasLoaded = true;
-    }
-
     public void onFuelFiltered(@Nullable FuelCategory fuelCategory) {
         if (onFuelFilteredListener != null) {
             onFuelFilteredListener.onFuelFiltered(fuelCategory);
         }
     }
 
-    public void setOnLocationGotListener(OnLocationGotListener onLocationGotListener) {
-        this.onLocationGotListener = onLocationGotListener;
-    }
-
     public void setOnFuelFilteredListener(OnFuelFilteredListener onFuelFilteredListener) {
         this.onFuelFilteredListener = onFuelFilteredListener;
+    }
+
+    @Override
+    public void onMapLoaded() {
+        loadingPanel.setVisibility(View.GONE);
+        wasLoaded = true;
     }
 
 
@@ -170,7 +125,7 @@ public class FuelStationsMapActivity
         void onFuelFiltered(FuelCategory fuelCategory);
     }
 
-    public interface OnLocationGotListener {
-        void onLocationGot(Location location);
-    }
+
+
+
 }

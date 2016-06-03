@@ -1,9 +1,14 @@
 package ru.yaklimenko.fuel.fragments;
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -32,17 +37,22 @@ import java.lang.reflect.Type;
 import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import ru.yaklimenko.fuel.Constants;
 import ru.yaklimenko.fuel.FuelApplicationPreferences;
 import ru.yaklimenko.fuel.FuelStationsMapActivity;
 import ru.yaklimenko.fuel.R;
+import ru.yaklimenko.fuel.db.dao.FuelCategoryDao;
+import ru.yaklimenko.fuel.db.dao.FuelDao;
 import ru.yaklimenko.fuel.db.entities.FillingStation;
+import ru.yaklimenko.fuel.db.entities.Fuel;
 import ru.yaklimenko.fuel.db.entities.FuelCategory;
 import ru.yaklimenko.fuel.dialogs.ConnectionProblemDialogFragment;
 import ru.yaklimenko.fuel.dialogs.FilterFuelDialogFragment;
 import ru.yaklimenko.fuel.net.DataLoader;
 import ru.yaklimenko.fuel.services.FillingStationsService;
+import ru.yaklimenko.fuel.utils.CommonUtil;
 
 /**
  * Created by Антон on 30.05.2016.
@@ -50,7 +60,7 @@ import ru.yaklimenko.fuel.services.FillingStationsService;
  */
 public class MapsFragment
         extends Fragment
-        implements OnMapReadyCallback, FuelStationsMapActivity.OnLocationGotListener {
+        implements OnMapReadyCallback, DialogInterface.OnClickListener {
 
     public static final String TAG = MapsFragment.class.getSimpleName();
     public static final String CAMERA_POSITION_KEY = "CameraPositionKey";
@@ -62,8 +72,7 @@ public class MapsFragment
     private List<Marker> stationsMarkers = new ArrayList<>();
     private List<FillingStation> stations;
 
-    boolean isMapReady, isLocationGot, isFirstTimeCameraConfigured = false;
-    Location usersLocation;
+    boolean isMapReady, isFirstTimeCameraConfigured = false;
     CameraPosition usersCameraPosition;
 
     boolean isRefreshButtonVisible = false;
@@ -71,38 +80,30 @@ public class MapsFragment
 
     FuelCategory fuelCategory;
 
+    private OnMapLoadedListener onMapLoadedListener;
+
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        FuelStationsMapActivity activity = (FuelStationsMapActivity)getActivity();
-        activity.setOnFuelFilteredListener(new FuelStationsMapActivity.OnFuelFilteredListener() {
-            @Override
-            public void onFuelFiltered(FuelCategory fuelCategory) {
-                MapsFragment.this.fuelCategory = fuelCategory;
-                setStations(stations);
-            }
-        });
+        FuelStationsMapActivity activity = (FuelStationsMapActivity) getActivity();
+//        activity.setOnFuelFilteredListener(new FuelStationsMapActivity.OnFuelFilteredListener() {
+//            @Override
+//            public void onFuelFiltered(FuelCategory fuelCategory) {
+//                MapsFragment.this.fuelCategory = fuelCategory;
+//                setStations(stations);
+//            }
+//        });
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_maps, container);
-        //setRetainInstance(true);
         MapFragment mapFragment = getMapFragment();
         mapFragment.getMapAsync(this);
-
         readSavedValues(savedInstanceState);
-        if (!isFirstTimeCameraConfigured) {
-            ((FuelStationsMapActivity) getActivity()).setOnLocationGotListener(this);
-        }
         setHasOptionsMenu(true);
         return root;
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
     }
 
     private void readSavedValues(Bundle savedInstanceState) {
@@ -138,8 +139,10 @@ public class MapsFragment
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        Log.d(TAG, "onMapReady: ");
         isMapReady = true;
+        if (onMapLoadedListener != null) {
+            onMapLoadedListener.onMapLoaded();
+        }
         mMap = googleMap;
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
 
@@ -151,22 +154,11 @@ public class MapsFragment
     }
 
     private void configCamera() {
-
         if (usersCameraPosition != null) {
             moveToSavedPosition();
             return;
         }
-        if (isLocationGot) {
-            ((FuelStationsMapActivity)getActivity()).onDataLoaded();
-            if (usersLocation != null) {
-                moveToMyLocation(usersLocation);
-            } else {
-                moveToTomsk();
-            }
-        } else {
-            moveToTomsk();
-        }
-
+        moveToMyOrCityCenterLocation();
     }
 
     private void moveToSavedPosition() {
@@ -174,8 +166,8 @@ public class MapsFragment
         usersCameraPosition = null;
     }
 
-    private void moveToMyLocation(Location location) {
-        LatLng user = new LatLng(location.getLatitude(), location.getLongitude());
+    private void moveToMyOrCityCenterLocation() {
+        //LatLng user = new LatLng(location.getLatitude(), location.getLongitude());
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
             boolean fineLocationGranted = getContext().checkSelfPermission(
                     android.Manifest.permission.ACCESS_FINE_LOCATION
@@ -189,9 +181,35 @@ public class MapsFragment
                 return;//permissions were requested on host activity
             }
         }
-        mMap.setMyLocationEnabled(true);
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(user));
-        mMap.moveCamera(CameraUpdateFactory.zoomTo(12f));
+
+        Location usersLocation = null;
+        LocationManager locationManager = (LocationManager) getActivity()
+                .getSystemService(Context.LOCATION_SERVICE);
+        List<String> providers = locationManager.getAllProviders();
+        if (providers.contains(LocationManager.GPS_PROVIDER)) {
+            usersLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            providers.remove(LocationManager.GPS_PROVIDER);
+        }
+        if (usersLocation == null && providers.contains(LocationManager.NETWORK_PROVIDER)) {
+            usersLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            providers.remove(LocationManager.NETWORK_PROVIDER);
+        }
+        if (usersLocation == null) {
+            for (String provider : providers) {
+                usersLocation = locationManager.getLastKnownLocation(provider);
+                if (usersLocation != null) {
+                    break;
+                }
+            }
+        }
+
+        if (usersLocation != null) {
+            mMap.setMyLocationEnabled(true);
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(usersLocation.getLatitude(), usersLocation.getLongitude())));
+            mMap.moveCamera(CameraUpdateFactory.zoomTo(12f));
+        } else {
+            moveToTomsk();
+        }
     }
 
     private void moveToTomsk() {
@@ -240,8 +258,10 @@ public class MapsFragment
     }
 
     public void onFuelSelectMenuItemClicked() {
-        FilterFuelDialogFragment.getInstance(fuelCategory == null ? null : fuelCategory.id)
-                .show(getFragmentManager(), FilterFuelDialogFragment.TAG);
+        FilterFuelDialogFragment filterFuelDialog = FilterFuelDialogFragment
+                .getInstance(fuelCategory == null ? null : fuelCategory.id);
+        filterFuelDialog.setTargetFragment(this, Constants.FUEL_FILTERED_REQUEST_CODE);
+        filterFuelDialog.show(getFragmentManager(), FilterFuelDialogFragment.TAG);
     }
 
     private void refreshFillingStations(boolean forceUpdate) {
@@ -338,24 +358,38 @@ public class MapsFragment
     }
 
     @Override
-    public void onLocationGot(Location location) {
-        if (isFirstTimeCameraConfigured) {
-            return;
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch(requestCode) {
+            case Constants.FUEL_FILTERED_REQUEST_CODE:
+                if (resultCode == Activity.RESULT_OK) {
+                     int fuelCategoryId =
+                             data.getIntExtra(FilterFuelDialogFragment.FUEL_CATEGORY_KEY, -1);
+                    FuelCategory newFuelCategory;
+                    if (fuelCategoryId == -1) {
+                        newFuelCategory = null;
+                    } else {
+                        newFuelCategory = FuelCategoryDao.getInstance().queryForId(fuelCategoryId);
+                    }
+                    if (!CommonUtil.equals(newFuelCategory, fuelCategory)) {
+                        fuelCategory = newFuelCategory;
+                        setStations(stations);
+                    }
+                }
+                break;
         }
-        isLocationGot = true;
-        usersLocation = location;
-        if (usersCameraPosition != null) {
-            moveToSavedPosition();
-            return;
-        }
-        if (isMapReady) {
-            if (location == null) {
-                moveToTomsk();
-            } else {
-                moveToMyLocation(usersLocation);
-            }
-            ((FuelStationsMapActivity)getActivity()).onDataLoaded();
-        }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
 
+    @Override
+    public void onClick(DialogInterface dialog, int which) {
+
+    }
+
+    public void setOnMapLoadedListener(OnMapLoadedListener onMapLoadedListener) {
+        this.onMapLoadedListener = onMapLoadedListener;
+    }
+
+    public interface OnMapLoadedListener {
+        void onMapLoaded();
     }
 }

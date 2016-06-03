@@ -9,7 +9,7 @@
         />
     <item
         android:id="@+id/filterFuel"
-        android:icon="@drawable/pick_fuel"
+        android:icon="@drawable/ic_filter_fuel"
         android:title="@string/pick_a_fuel_type"
         android:showAsAction="ifRoom"
         />

@@ -19,4 +19,23 @@ public class FuelCategory implements Serializable {
 
     @DatabaseField
     public String name;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        FuelCategory that = (FuelCategory) o;
+
+        if (id != that.id) return false;
+        return name.equals(that.name);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id;
+        result = 31 * result + name.hashCode();
+        return result;
+    }
 }

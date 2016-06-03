@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="app_modes">
+        <item>@string/app_mode_map</item>
+        <item>@string/app_mode_list</item>
+    </array>
+</resources>

@@ -20,7 +20,6 @@ public class FuelStationsMapActivity extends Activity implements MapsFragment.On
             FuelStationsMapActivity.class.getCanonicalName() + ".OnAlreadyBeenLoaded";
 
     private boolean wasLoaded;
-    private OnFuelFilteredListener onFuelFilteredListener;
 
     private View loadingPanel;
 

@@ -53,4 +53,9 @@ public class FillingStation {
         result = 31 * result + longitude.hashCode();
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "|" + name + "|" + address + "|";
+    }
 }

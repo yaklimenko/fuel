@@ -18,7 +18,7 @@
     <string name="app_mode_list">Список</string>
 
     <!-- станции по категории -->
-    <string name="price">%1$f р</string>
+    <string name="price">%1$.2f р</string>
 
 
 </resources>

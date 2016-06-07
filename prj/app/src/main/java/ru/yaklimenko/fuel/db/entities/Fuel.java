@@ -25,6 +25,6 @@ public class Fuel {
     public int categoryId;
 
     @DatabaseField(columnName = COL_PRICE)
-    public float price;
+    public double price;
 
 }

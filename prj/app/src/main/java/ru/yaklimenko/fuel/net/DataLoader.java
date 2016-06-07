@@ -165,10 +165,15 @@ public class DataLoader {
 
     private void rewriteFillingStationsInDb(List<FillingStation> fillingStations) {
         clearStationAndFuelsTable();
-        FillingStationDao.getInstance().createAll(fillingStations);
 
         List<Fuel> fuelsToStore = new ArrayList<>();
         for (FillingStation stationsToStore : fillingStations) {
+            if (stationsToStore.name != null) {
+                stationsToStore.name = stationsToStore.name.trim();
+            }
+            if (stationsToStore.address != null) {
+                stationsToStore.address = stationsToStore.address.trim();
+            }
             if (stationsToStore.fuels != null && stationsToStore.fuels.length > 0) {
                 for (Fuel fuelToStore : stationsToStore.fuels) {
                     fuelToStore.stationId = stationsToStore.id;
@@ -176,6 +181,7 @@ public class DataLoader {
                 }
             }
         }
+        FillingStationDao.getInstance().createAll(fillingStations);
         FuelDao.getInstance().createAll(fuelsToStore);
 
     }

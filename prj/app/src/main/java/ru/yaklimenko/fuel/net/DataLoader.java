@@ -219,6 +219,11 @@ public class DataLoader {
 
     private void rewriteCategories(List<FuelCategory> fuelCategories) {
         clearCategoriesTable();
+        for (FuelCategory fuelCategory : fuelCategories) {
+            if (fuelCategory.name != null) {
+                fuelCategory.name = fuelCategory.name.trim();
+            }
+        }
         FuelCategoryDao.getInstance().createAll(fuelCategories);
     }
 

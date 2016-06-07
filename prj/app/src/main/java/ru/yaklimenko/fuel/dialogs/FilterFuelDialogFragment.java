@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
-import android.app.Fragment;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -22,11 +21,14 @@ import ru.yaklimenko.fuel.db.entities.FuelCategory;
 public class FilterFuelDialogFragment extends DialogFragment {
     public static final String TAG = FilterFuelDialogFragment.class.getSimpleName();
     public static final String FUEL_CATEGORY_KEY = "fuelCategoryId";
+    public static final String FUEL_CATEGORY_CAN_CLEAR_CHOICE_KEY = "canClearChoice";
 
     /**
      * currently used on maps fuel type id
      */
     private int fuelCategoryId = -1;
+
+    private boolean canClearChoice = true;
 
     public static FilterFuelDialogFragment getInstance(Integer fuelCategoryId) {
         FilterFuelDialogFragment f = new FilterFuelDialogFragment();
@@ -38,19 +40,37 @@ public class FilterFuelDialogFragment extends DialogFragment {
         return f;
     }
 
+    public static FilterFuelDialogFragment getInstance(Integer fuelCategoryId, boolean canClearChoice) {
+        FilterFuelDialogFragment f = new FilterFuelDialogFragment();
+        if (fuelCategoryId != null) {
+            Bundle args = new Bundle();
+            args.putInt(FUEL_CATEGORY_KEY, fuelCategoryId);
+            args.putBoolean(FUEL_CATEGORY_CAN_CLEAR_CHOICE_KEY, canClearChoice);
+            f.setArguments(args);
+        }
+        return f;
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (savedInstanceState != null) {
             fuelCategoryId = savedInstanceState.getInt(FUEL_CATEGORY_KEY, -1);
-        } else if (getArguments() != null && getArguments().containsKey(FUEL_CATEGORY_KEY)) {
-            fuelCategoryId = getArguments().getInt(FUEL_CATEGORY_KEY);
+            canClearChoice = savedInstanceState.getBoolean(FUEL_CATEGORY_CAN_CLEAR_CHOICE_KEY, true);
+        } else if (getArguments() != null){
+            Bundle arguments = getArguments();
+            if (arguments.containsKey(FUEL_CATEGORY_KEY)) {
+                fuelCategoryId = arguments.getInt(FUEL_CATEGORY_KEY);
+            }
+            if (arguments.containsKey(FUEL_CATEGORY_CAN_CLEAR_CHOICE_KEY)) {
+                canClearChoice = arguments.getBoolean(FUEL_CATEGORY_CAN_CLEAR_CHOICE_KEY, true);
+            }
         }
     }
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        final List<FuelCategory> categories = FuelCategoryDao.getInstance().queryForAll();
+        final List<FuelCategory> categories = FuelCategoryDao.getInstance().getAllSorted();
 
         DialogInterface.OnClickListener selectedItemListener = new DialogInterface.OnClickListener() {
             @Override
@@ -83,16 +103,21 @@ public class FilterFuelDialogFragment extends DialogFragment {
             }
             catNames[i] = category.name;
         }
-        return new AlertDialog.Builder(getActivity())
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())
                 .setTitle(R.string.dialog_fuelfilter_title)
                 .setSingleChoiceItems(catNames, checkedItemPosition, selectedItemListener)
                 .setPositiveButton(R.string.dialog_ok, okClickListener)
-                .setNegativeButton(R.string.dialog_cancel, null)
-                .setNeutralButton(R.string.dialog_fuelfilter_clear_button, clearClickListener)
-                .create();
+                .setNegativeButton(R.string.dialog_cancel, null);
+        if (canClearChoice) {
+            builder.setNeutralButton(R.string.dialog_fuelfilter_clear_button, clearClickListener);
+        }
+        return builder.create();
     }
 
     private void sendResult(Integer fuelCategoryId) {
+        if (getTargetFragment() == null){
+            return;
+        }
         Intent data = getActivity().getIntent();
         data.putExtra(FUEL_CATEGORY_KEY, fuelCategoryId);
         getTargetFragment().onActivityResult(
@@ -103,6 +128,7 @@ public class FilterFuelDialogFragment extends DialogFragment {
     @Override
     public void onSaveInstanceState(Bundle outState) {
         outState.putInt(FUEL_CATEGORY_KEY, fuelCategoryId);
+        outState.putBoolean(FUEL_CATEGORY_CAN_CLEAR_CHOICE_KEY, canClearChoice);
         super.onSaveInstanceState(outState);
     }
 }

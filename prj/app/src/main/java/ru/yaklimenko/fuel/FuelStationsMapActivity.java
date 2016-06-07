@@ -1,6 +1,7 @@
 package ru.yaklimenko.fuel;
 
 import android.app.Activity;
+import android.app.FragmentManager;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
@@ -9,21 +10,23 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-import ru.yaklimenko.fuel.db.entities.FuelCategory;
 import ru.yaklimenko.fuel.fragments.StationsByFuelFragment;
 import ru.yaklimenko.fuel.fragments.MapsFragment;
 
 public class FuelStationsMapActivity extends Activity implements MapsFragment.OnMapLoadedListener {
 
     public static final String TAG = "ActivityTestTag";
-    public static final String WAS_LOADED =
-            FuelStationsMapActivity.class.getCanonicalName() + ".OnAlreadyBeenLoaded";
+    public static final String WAS_LOADED_KEY = "wasLoadedKeyKey";
+    public static final String CURRENT_FRAGMENT_TAG_KEY = "currentFragmentTagKey";
 
     private boolean wasLoaded;
 
     private View loadingPanel;
 
     DrawerLayout drawerLayout;
+
+    private String currentFragmentTag;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate: ");
@@ -36,35 +39,41 @@ public class FuelStationsMapActivity extends Activity implements MapsFragment.On
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         final ListView drawerList = (ListView) findViewById(R.id.left_drawer);
 
-        // Set the adapter for the list view
-        drawerList.setAdapter(new ArrayAdapter<String>(this,
+        drawerList.setAdapter(new ArrayAdapter<>(this,
                 R.layout.drawer_list_item, modes));
-        // Set the list's click listener
 
-        getFragmentManager().beginTransaction()
-                .replace(R.id.content_frame, new MapsFragment(), MapsFragment.TAG)
-                .commit();
+        if (currentFragmentTag == null) {
+            openMapsFragment(getFragmentManager());
+        }
 
         drawerList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 android.app.FragmentManager fManager = getFragmentManager();
                 if (position == 0) {
-                    fManager.beginTransaction()
-                            .replace(R.id.content_frame, new MapsFragment(), MapsFragment.TAG)
-                            .commit();
-
+                    openMapsFragment(fManager);
                 } else if (position == 1) {
-                    fManager.beginTransaction()
-                            .replace(R.id.content_frame, new StationsByFuelFragment(), StationsByFuelFragment.TAG)
-                            .addToBackStack(StationsByFuelFragment.TAG)
-                            .commit();
+                    openStationsByFulesFragment(fManager);
                 }
-
                 drawerLayout.closeDrawer(drawerList);
-
             }
         });
+    }
+
+    private void openStationsByFulesFragment(FragmentManager fManager) {
+        currentFragmentTag = StationsByFuelFragment.TAG;
+        fManager.beginTransaction()
+                .replace(R.id.content_frame, new StationsByFuelFragment(), StationsByFuelFragment.TAG)
+                .addToBackStack(StationsByFuelFragment.TAG)
+                .commit();
+    }
+
+    private void openMapsFragment(FragmentManager fManager) {
+        currentFragmentTag = MapsFragment.TAG;
+        fManager.beginTransaction()
+                .replace(R.id.content_frame, new MapsFragment(), MapsFragment.TAG)
+                .addToBackStack(MapsFragment.TAG)
+                .commit();
     }
 
     @Override
@@ -81,23 +90,12 @@ public class FuelStationsMapActivity extends Activity implements MapsFragment.On
         }
     }
 
-    @Override
-    protected void onResume() {
-        Log.d(TAG, "onResume: ");
-        super.onResume();
-    }
-
-    @Override
-    protected void onRestart() {
-        Log.d(TAG, "onRestart: ");
-        super.onRestart();
-    }
-
     private void readSavedValues(Bundle savedInstanceState) {
         if (savedInstanceState == null) {
             return;
         }
-        wasLoaded = savedInstanceState.getBoolean(WAS_LOADED);
+        currentFragmentTag = savedInstanceState.getString(CURRENT_FRAGMENT_TAG_KEY, null);
+        wasLoaded = savedInstanceState.getBoolean(WAS_LOADED_KEY);
         if (wasLoaded) {
             loadingPanel.setVisibility(View.GONE);
         }
@@ -105,7 +103,8 @@ public class FuelStationsMapActivity extends Activity implements MapsFragment.On
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        outState.putBoolean(WAS_LOADED, wasLoaded);
+        outState.putBoolean(WAS_LOADED_KEY, wasLoaded);
+        outState.putString(CURRENT_FRAGMENT_TAG_KEY, currentFragmentTag);
         super.onSaveInstanceState(outState);
     }
 
@@ -114,5 +113,19 @@ public class FuelStationsMapActivity extends Activity implements MapsFragment.On
     public void onMapLoaded() {
         loadingPanel.setVisibility(View.GONE);
         wasLoaded = true;
+    }
+
+    @Override
+    public void onBackPressed() {
+
+        int count = getFragmentManager().getBackStackEntryCount();
+
+        if (count == 0) {
+            super.onBackPressed();
+            //additional code
+        } else {
+            getFragmentManager().popBackStack();
+        }
+
     }
 }

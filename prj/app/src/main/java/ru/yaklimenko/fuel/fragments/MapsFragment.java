@@ -85,20 +85,12 @@ public class MapsFragment
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        FuelStationsMapActivity activity = (FuelStationsMapActivity) getActivity();
-//        activity.setOnFuelFilteredListener(new FuelStationsMapActivity.OnFuelFilteredListener() {
-//            @Override
-//            public void onFuelFiltered(FuelCategory fuelCategory) {
-//                MapsFragment.this.fuelCategory = fuelCategory;
-//                setStations(stations);
-//            }
-//        });
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View root = inflater.inflate(R.layout.fragment_maps, container, false);
+        View root = inflater.inflate(R.layout.fragment_maps, null, false);
         MapFragment mapFragment = getMapFragment();
         mapFragment.getMapAsync(this);
         readSavedValues(savedInstanceState);
@@ -354,6 +346,7 @@ public class MapsFragment
         if (fuelCategory != null) {
             outState.putSerializable(FUEL_CATEGORY_KEY, fuelCategory);
         }
+
         super.onSaveInstanceState(outState);
     }
 

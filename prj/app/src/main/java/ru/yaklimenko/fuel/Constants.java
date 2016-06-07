@@ -14,6 +14,8 @@ public class Constants {
     //request codes
     public static final int MY_LOCATION_PERMISSIONS_REQUEST_CODE = 101;
     public static final int FUEL_FILTERED_REQUEST_CODE = 102;
+    public static final int FUEL_FILTERED2_REQUEST_CODE = 103;
+    public static final int PRICE_SORTED_REQUEST_CODE = 104;
 
     //network
     public static final String SERVER_URL = "http://109.120.189.182";

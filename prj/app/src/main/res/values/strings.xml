@@ -12,6 +12,8 @@
     <string name="dialog_cancel">отмена</string>
     <string name="dialog_fuelfilter_title">Выберите тип топлива</string>
     <string name="dialog_fuelfilter_clear_button">очистить выбор</string>
+    <string name="dialogPriceSortAscendingOption">Цена по возрастанию</string>
+    <string name="dialogPriceSortDescendingOption">Цена по убыванию</string>
 
     <!-- главное меню -->
     <string name="app_mode_map">Карта</string>
@@ -19,6 +21,9 @@
 
     <!-- станции по категории -->
     <string name="price">%1$.2f р</string>
+    <string name="filterFuelMenuItem">Выбрать топливо</string>
+    <string name="sortByPriceMenuItem">Сортировать по цене</string>
+
 
 
 </resources>

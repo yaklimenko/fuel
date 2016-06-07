@@ -45,7 +45,7 @@ public class FuelCategoryDao extends FuelBaseDao<FuelCategory, Integer> {
                     .eq(FuelCategory.COL_NAME, fuelCategoryName)
                     .queryForFirst();
         } catch (SQLException e) {
-            throw new IllegalStateException("cannot get fuel category by name");
+            throw new IllegalStateException("cannot get fuel category by name", e);
         }
     }
 
@@ -53,7 +53,15 @@ public class FuelCategoryDao extends FuelBaseDao<FuelCategory, Integer> {
         try {
             return queryBuilder().queryForFirst();
         } catch (SQLException e) {
-            throw new IllegalStateException("cannot get first fuel");
+            throw new IllegalStateException("cannot get first fuel", e);
+        }
+    }
+
+    public List<FuelCategory> getAllSorted() {
+        try {
+            return queryBuilder().orderBy(FuelCategory.COL_NAME, true).query();
+        } catch (SQLException e) {
+            throw new IllegalStateException("cannot get all fuel categories", e);
         }
     }
 }

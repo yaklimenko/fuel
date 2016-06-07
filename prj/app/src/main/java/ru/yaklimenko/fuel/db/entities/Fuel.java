@@ -12,6 +12,7 @@ public class Fuel {
 
     public static final String COL_STATION = "stationId";
     public static final String COL_CATEGORY = "categoryId";
+    public static final String COL_PRICE = "price";
 
     @DatabaseField(generatedId = true)
     public int id;
@@ -23,7 +24,7 @@ public class Fuel {
     @DatabaseField (columnName = COL_CATEGORY)
     public int categoryId;
 
-    @DatabaseField
+    @DatabaseField(columnName = COL_PRICE)
     public float price;
 
 }

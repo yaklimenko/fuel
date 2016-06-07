@@ -29,4 +29,28 @@ public class FillingStation {
     public Fuel[] fuels;
 
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        FillingStation that = (FillingStation) o;
+
+        if (id != that.id) return false;
+        if (address != null ? !address.equals(that.address) : that.address != null) return false;
+        if (!name.equals(that.name)) return false;
+        if (!latitude.equals(that.latitude)) return false;
+        return longitude.equals(that.longitude);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id;
+        result = 31 * result + (address != null ? address.hashCode() : 0);
+        result = 31 * result + name.hashCode();
+        result = 31 * result + latitude.hashCode();
+        result = 31 * result + longitude.hashCode();
+        return result;
+    }
 }

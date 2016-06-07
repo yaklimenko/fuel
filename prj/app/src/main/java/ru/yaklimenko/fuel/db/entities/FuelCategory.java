@@ -13,11 +13,12 @@ import java.io.Serializable;
 public class FuelCategory implements Serializable {
 
     public static final String REQUEST_URL = "category";
+    public static final String COL_NAME = "name";
 
     @DatabaseField(id = true)
     public int id;
 
-    @DatabaseField
+    @DatabaseField (columnName = COL_NAME)
     public String name;
 
     @Override

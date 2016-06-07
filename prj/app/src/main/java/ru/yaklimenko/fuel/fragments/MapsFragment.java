@@ -98,7 +98,7 @@ public class MapsFragment
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View root = inflater.inflate(R.layout.fragment_maps, container);
+        View root = inflater.inflate(R.layout.fragment_maps, container, false);
         MapFragment mapFragment = getMapFragment();
         mapFragment.getMapAsync(this);
         readSavedValues(savedInstanceState);

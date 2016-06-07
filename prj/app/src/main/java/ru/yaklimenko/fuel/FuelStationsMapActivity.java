@@ -2,8 +2,6 @@ package ru.yaklimenko.fuel;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.view.View;
@@ -12,7 +10,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import ru.yaklimenko.fuel.db.entities.FuelCategory;
-import ru.yaklimenko.fuel.fragments.ListFragment;
+import ru.yaklimenko.fuel.fragments.StationsByFuelFragment;
 import ru.yaklimenko.fuel.fragments.MapsFragment;
 
 public class FuelStationsMapActivity extends Activity implements MapsFragment.OnMapLoadedListener {
@@ -25,6 +23,8 @@ public class FuelStationsMapActivity extends Activity implements MapsFragment.On
     private OnFuelFilteredListener onFuelFilteredListener;
 
     private View loadingPanel;
+
+    DrawerLayout drawerLayout;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate: ");
@@ -34,13 +34,18 @@ public class FuelStationsMapActivity extends Activity implements MapsFragment.On
         readSavedValues(savedInstanceState);
 
         String[] modes = getResources().getStringArray(R.array.app_modes);
-        DrawerLayout drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ListView drawerList = (ListView) findViewById(R.id.left_drawer);
+        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        final ListView drawerList = (ListView) findViewById(R.id.left_drawer);
 
         // Set the adapter for the list view
         drawerList.setAdapter(new ArrayAdapter<String>(this,
                 R.layout.drawer_list_item, modes));
         // Set the list's click listener
+
+        getFragmentManager().beginTransaction()
+                .replace(R.id.content_frame, new MapsFragment(), MapsFragment.TAG)
+                .commit();
+
         drawerList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -52,10 +57,12 @@ public class FuelStationsMapActivity extends Activity implements MapsFragment.On
 
                 } else if (position == 1) {
                     fManager.beginTransaction()
-                            .replace(R.id.content_frame, new ListFragment(), ListFragment.TAG)
-                            .addToBackStack(ListFragment.TAG)
+                            .replace(R.id.content_frame, new StationsByFuelFragment(), StationsByFuelFragment.TAG)
+                            .addToBackStack(StationsByFuelFragment.TAG)
                             .commit();
                 }
+
+                drawerLayout.closeDrawer(drawerList);
 
             }
         });
@@ -66,7 +73,7 @@ public class FuelStationsMapActivity extends Activity implements MapsFragment.On
         Log.d(TAG, "onStart: ");
         super.onStart();
         MapsFragment mapsFragment =
-                (MapsFragment)getFragmentManager().findFragmentById(R.id.mapsFragment);
+                (MapsFragment)getFragmentManager().findFragmentByTag(MapsFragment.TAG);
 
         if (mapsFragment != null) {
             mapsFragment.setOnMapLoadedListener(this);
@@ -104,28 +111,9 @@ public class FuelStationsMapActivity extends Activity implements MapsFragment.On
     }
 
 
-    public void onFuelFiltered(@Nullable FuelCategory fuelCategory) {
-        if (onFuelFilteredListener != null) {
-            onFuelFilteredListener.onFuelFiltered(fuelCategory);
-        }
-    }
-
-    public void setOnFuelFilteredListener(OnFuelFilteredListener onFuelFilteredListener) {
-        this.onFuelFilteredListener = onFuelFilteredListener;
-    }
-
     @Override
     public void onMapLoaded() {
         loadingPanel.setVisibility(View.GONE);
         wasLoaded = true;
     }
-
-
-    public interface OnFuelFilteredListener{
-        void onFuelFiltered(FuelCategory fuelCategory);
-    }
-
-
-
-
 }

@@ -37,4 +37,23 @@ public class FuelCategoryDao extends FuelBaseDao<FuelCategory, Integer> {
             }
         });
     }
+
+    public FuelCategory getByName (String fuelCategoryName) {
+        try {
+            return queryBuilder()
+                    .where()
+                    .eq(FuelCategory.COL_NAME, fuelCategoryName)
+                    .queryForFirst();
+        } catch (SQLException e) {
+            throw new IllegalStateException("cannot get fuel category by name");
+        }
+    }
+
+    public FuelCategory getFirst () {
+        try {
+            return queryBuilder().queryForFirst();
+        } catch (SQLException e) {
+            throw new IllegalStateException("cannot get first fuel");
+        }
+    }
 }

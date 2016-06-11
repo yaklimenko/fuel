@@ -16,7 +16,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -175,6 +174,15 @@ public class StationsByFuelFragment extends Fragment {
         stationsByFuelList.setAdapter(new StationsByFuelAdapter(stations));
     }
 
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        if (selectedCategory != null) {
+            outState.putInt(CATEGORY_KEY, selectedCategory.id);
+        }
+        outState.putBoolean(ASCENDING_SORTING_KEY, priceAscending);
+        super.onSaveInstanceState(outState);
+    }
+
     private class StationsByFuelAdapter extends BaseAdapter {
 
         private List<FillingStation> items;
@@ -197,7 +205,6 @@ public class StationsByFuelFragment extends Fragment {
         public long getItemId(int position) {
             return position;
         }
-
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             View view = convertView == null ?
@@ -205,7 +212,7 @@ public class StationsByFuelFragment extends Fragment {
                             .inflate(R.layout.station_by_fuel_list_item, parent, false) :
                     convertView;
             Fuel fuel = fuelsByStations.get(items.get(position));
-            FillingStation station = items.get(position);
+            final FillingStation station = items.get(position);
             TextView category = (TextView)view.findViewById(R.id.stationsByFuelListCategory);
             category.setText(selectedCategory.name);
 
@@ -218,17 +225,16 @@ public class StationsByFuelFragment extends Fragment {
             TextView address = (TextView)view.findViewById(R.id.stationsByFuelListStationAddress);
             address.setText(station.address);
 
+            view.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    StationFragment.openStationFragment(station.id, getActivity().getFragmentManager());
+                }
+            });
+
             return view;
         }
-    }
 
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        if (selectedCategory != null) {
-            outState.putInt(CATEGORY_KEY, selectedCategory.id);
-        }
-        outState.putBoolean(ASCENDING_SORTING_KEY, priceAscending);
-        super.onSaveInstanceState(outState);
     }
 
 

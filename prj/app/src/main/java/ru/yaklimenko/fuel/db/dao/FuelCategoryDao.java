@@ -64,4 +64,17 @@ public class FuelCategoryDao extends FuelBaseDao<FuelCategory, Integer> {
             throw new IllegalStateException("cannot get all fuel categories", e);
         }
     }
+
+    public List<FuelCategory> getByIdList (List<Integer> idList) {
+        try {
+            return queryBuilder()
+                    .orderBy(FuelCategory.COL_NAME, true)
+                    .where()
+                    .in(FuelCategory.COL_ID, idList)
+                    .query();
+        } catch (SQLException e) {
+            throw new IllegalStateException("cannot get fuelCategory list", e);
+        }
+
+    }
 }

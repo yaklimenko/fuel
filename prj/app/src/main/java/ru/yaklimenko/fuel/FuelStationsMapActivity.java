@@ -1,6 +1,7 @@
 package ru.yaklimenko.fuel;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.app.FragmentManager;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
@@ -26,6 +27,8 @@ public class FuelStationsMapActivity extends Activity implements MapsFragment.On
     DrawerLayout drawerLayout;
 
     private String currentFragmentTag;
+
+    private Fragment currentFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,16 +65,18 @@ public class FuelStationsMapActivity extends Activity implements MapsFragment.On
 
     private void openStationsByFulesFragment(FragmentManager fManager) {
         currentFragmentTag = StationsByFuelFragment.TAG;
+        currentFragment = new StationsByFuelFragment();
         fManager.beginTransaction()
-                .replace(R.id.content_frame, new StationsByFuelFragment(), StationsByFuelFragment.TAG)
+                .replace(R.id.content_frame, currentFragment, StationsByFuelFragment.TAG)
                 .addToBackStack(StationsByFuelFragment.TAG)
                 .commit();
     }
 
     private void openMapsFragment(FragmentManager fManager) {
         currentFragmentTag = MapsFragment.TAG;
+        currentFragment = new MapsFragment();
         fManager.beginTransaction()
-                .replace(R.id.content_frame, new MapsFragment(), MapsFragment.TAG)
+                .replace(R.id.content_frame, currentFragment, MapsFragment.TAG)
                 .addToBackStack(MapsFragment.TAG)
                 .commit();
     }
@@ -114,18 +119,35 @@ public class FuelStationsMapActivity extends Activity implements MapsFragment.On
         loadingPanel.setVisibility(View.GONE);
         wasLoaded = true;
     }
+//
+//    @Override
+//    public void onBackPressed() {
+//
+//        int count = getFragmentManager().getBackStackEntryCount();
+//
+//        if (count == 0) {
+//            super.onBackPressed();
+//            //additional code
+//        } else {
+//            getFragmentManager().popBackStack();
+//        }
+//
+//    }
+
 
     @Override
     public void onBackPressed() {
 
-        int count = getFragmentManager().getBackStackEntryCount();
-
-        if (count == 0) {
-            super.onBackPressed();
-            //additional code
-        } else {
-            getFragmentManager().popBackStack();
+        // If the fragment exists and has some back-stack entry
+        if (currentFragment != null && currentFragment.getChildFragmentManager().getBackStackEntryCount() > 0){
+            // Get the fragment fragment manager - and pop the backstack
+            currentFragment.getChildFragmentManager().popBackStack();
         }
-
+        // Else, nothing in the direct fragment back stack
+        else{
+            // Let super handle the back press
+            super.onBackPressed();
+        }
     }
+
 }

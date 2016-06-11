@@ -14,8 +14,9 @@ public class FuelCategory implements Serializable {
 
     public static final String REQUEST_URL = "category";
     public static final String COL_NAME = "name";
+    public static final String COL_ID = "id";
 
-    @DatabaseField(id = true)
+    @DatabaseField(id = true, columnName = COL_ID)
     public int id;
 
     @DatabaseField (columnName = COL_NAME)

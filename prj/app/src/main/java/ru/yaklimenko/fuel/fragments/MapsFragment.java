@@ -37,16 +37,14 @@ import java.lang.reflect.Type;
 import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 import ru.yaklimenko.fuel.Constants;
 import ru.yaklimenko.fuel.FuelApplicationPreferences;
-import ru.yaklimenko.fuel.FuelStationsMapActivity;
 import ru.yaklimenko.fuel.R;
 import ru.yaklimenko.fuel.db.dao.FuelCategoryDao;
-import ru.yaklimenko.fuel.db.dao.FuelDao;
 import ru.yaklimenko.fuel.db.entities.FillingStation;
-import ru.yaklimenko.fuel.db.entities.Fuel;
 import ru.yaklimenko.fuel.db.entities.FuelCategory;
 import ru.yaklimenko.fuel.dialogs.ConnectionProblemDialogFragment;
 import ru.yaklimenko.fuel.dialogs.FilterFuelDialogFragment;
@@ -71,6 +69,8 @@ public class MapsFragment
 
     private List<Marker> stationsMarkers = new ArrayList<>();
     private List<FillingStation> stations;
+    private Map<Marker, FillingStation> stationsByMarkers = new WeakHashMap<>();
+    private Map<FillingStation, Marker> markersByStations = new WeakHashMap<>();
 
     boolean isMapReady, isFirstTimeCameraConfigured = false;
     CameraPosition usersCameraPosition;
@@ -87,10 +87,15 @@ public class MapsFragment
         super.onActivityCreated(savedInstanceState);
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+    }
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View root = inflater.inflate(R.layout.fragment_maps, null, false);
+        View root = inflater.inflate(R.layout.fragment_maps, container, false);
         MapFragment mapFragment = getMapFragment();
         mapFragment.getMapAsync(this);
         readSavedValues(savedInstanceState);
@@ -319,9 +324,22 @@ public class MapsFragment
 
             );
             stationsMarkers.add(marker);
+            stationsByMarkers.put(marker, fillingStation);
+            markersByStations.put(fillingStation, marker);
         }
         setFilterFuelButtonVisibility(true);
+        mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
+            @Override
+            public void onInfoWindowClick(Marker marker) {
+                FillingStation clickedStation = stationsByMarkers.get(marker);
+                StationFragment.openStationFragment(
+                        clickedStation.id, getActivity().getFragmentManager()
+                );
+            }
+        });
     }
+
+
 
     @Override
     public void onPause() {
@@ -372,6 +390,21 @@ public class MapsFragment
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
+
+//    @Override
+//    public void onDestroyView() {
+//        super.onDestroyView();
+//        FragmentManager fm;
+//        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+//            fm = getFragmentManager();
+//        } else {
+//            fm = getChildFragmentManager();
+//        }
+//        MapFragment f = (MapFragment) fm.findFragmentById(R.id.map);
+//        if (f != null) {
+//            getFragmentManager().beginTransaction().remove(f).commit();
+//        }
+//    }
 
     @Override
     public void onClick(DialogInterface dialog, int which) {

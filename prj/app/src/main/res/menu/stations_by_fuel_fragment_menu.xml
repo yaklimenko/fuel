@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/filterFuel"
         android:title="@string/filterFuelMenuItem"
         android:icon="@drawable/ic_filter_fuel"
-        android:showAsAction="ifRoom"
+        app:showAsAction="ifRoom"
         />
     <item
         android:id="@+id/sortByPrice"
         android:title="@string/sortByPriceMenuItem"
         android:icon="@drawable/ic_sort_by_price"
-        android:showAsAction="ifRoom"
+        app:showAsAction="ifRoom"
         />
 </menu>

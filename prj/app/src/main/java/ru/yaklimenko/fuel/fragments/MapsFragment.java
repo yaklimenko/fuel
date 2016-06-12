@@ -12,6 +12,8 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -43,6 +45,7 @@ import java.util.WeakHashMap;
 import ru.yaklimenko.fuel.Constants;
 import ru.yaklimenko.fuel.FuelApplicationPreferences;
 import ru.yaklimenko.fuel.R;
+import ru.yaklimenko.fuel.db.dao.FillingStationDao;
 import ru.yaklimenko.fuel.db.dao.FuelCategoryDao;
 import ru.yaklimenko.fuel.db.entities.FillingStation;
 import ru.yaklimenko.fuel.db.entities.FuelCategory;
@@ -61,16 +64,20 @@ public class MapsFragment
         implements OnMapReadyCallback, DialogInterface.OnClickListener {
 
     public static final String TAG = MapsFragment.class.getSimpleName();
+    private static final float DEFAULT_ZOOM = 12f;
     public static final String CAMERA_POSITION_KEY = "CameraPositionKey";
     public static final String STATIONS_KEY = "StationsKey";
     public static final String FUEL_CATEGORY_KEY = "FuelCategoryKey";
+    public static final String STATION_TO_CENTER_KEY = "StationToCenterKey";
 
     private GoogleMap mMap;
 
+    private int stationToCenterId = -1;
     private List<Marker> stationsMarkers = new ArrayList<>();
     private List<FillingStation> stations;
     private Map<Marker, FillingStation> stationsByMarkers = new WeakHashMap<>();
     private Map<FillingStation, Marker> markersByStations = new WeakHashMap<>();
+
 
     boolean isMapReady, isFirstTimeCameraConfigured = false;
     CameraPosition usersCameraPosition;
@@ -81,6 +88,42 @@ public class MapsFragment
     FuelCategory fuelCategory;
 
     private OnMapLoadedListener onMapLoadedListener;
+
+    public static void openMapsFragment(FragmentManager fManager) {
+        Fragment f = fManager.findFragmentByTag(TAG);
+        if (f == null) {
+            f = new MapsFragment();
+        }
+        fManager.beginTransaction()
+                .replace(R.id.content_frame, f, TAG)
+                .addToBackStack(TAG)
+                .commit();
+    }
+
+    public static void openMapsFragment(FragmentManager fManager, int stationToCenterId) {
+
+        Fragment f = fManager.findFragmentByTag(TAG);
+        Bundle args;
+        if (f == null) {
+            f = new MapsFragment();
+            args = new Bundle();
+            args.putInt(STATION_TO_CENTER_KEY, stationToCenterId);
+            f.setArguments(args);
+        } else {
+            args = f.getArguments();
+            args.putInt(STATION_TO_CENTER_KEY, stationToCenterId);
+        }
+        fManager.beginTransaction()
+                .replace(R.id.content_frame, f, TAG)
+                .addToBackStack(TAG)
+                .commit();
+    }
+
+    public MapsFragment() {
+        super();
+        // Just to be an empty Bundle. You can use this later with getArguments().set...
+        setArguments(new Bundle());
+    }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -100,7 +143,18 @@ public class MapsFragment
         mapFragment.getMapAsync(this);
         readSavedValues(savedInstanceState);
         setHasOptionsMenu(true);
+        setTitle();
+
         return root;
+    }
+
+    private void setTitle() {
+        ActionBar actionBar = ((AppCompatActivity)getActivity()).getSupportActionBar();
+        if(actionBar == null) {
+            Log.e(TAG, "setTitle: cannot find action bar");
+            return;
+        }
+        actionBar.setTitle(R.string.app_mode_map);
     }
 
     private void readSavedValues(Bundle savedInstanceState) {
@@ -143,19 +197,51 @@ public class MapsFragment
         mMap = googleMap;
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
 
-        configCamera();
-
         if (new FuelApplicationPreferences(getActivity()).isNeedToCheckStations())  {
             refreshFillingStations(false);
         }
+        configCamera();
     }
 
     private void configCamera() {
+        Marker marketToCenter = getMarkerFromArgs();
+        if (marketToCenter != null) {
+            moveCameraToMarker(marketToCenter);
+            return;
+        }
+
         if (usersCameraPosition != null) {
             moveToSavedPosition();
             return;
         }
         moveToMyOrCityCenterLocation();
+    }
+
+    @Nullable
+    private Marker getMarkerFromArgs() {
+        Bundle args = getArguments();
+        if (args == null) {
+            return null;
+        }
+        stationToCenterId = args.getInt(STATION_TO_CENTER_KEY, -1);
+        args.remove(STATION_TO_CENTER_KEY);
+        if (stationToCenterId == -1) {
+            return null;
+        }
+
+        FillingStation stationToCenter = FillingStationDao.getInstance()
+                .queryForId(stationToCenterId);
+        Marker marketToCenter = markersByStations.get(stationToCenter);
+        if (marketToCenter == null) {
+            throw new IllegalStateException("cannot find marker");
+        }
+        return marketToCenter;
+    }
+
+    private void moveCameraToMarker(Marker markerToCenter) {
+        float zoom = mMap.getCameraPosition().zoom;
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(markerToCenter.getPosition(), DEFAULT_ZOOM));
+        markerToCenter.showInfoWindow();
     }
 
     private void moveToSavedPosition() {
@@ -203,7 +289,7 @@ public class MapsFragment
         if (usersLocation != null) {
             mMap.setMyLocationEnabled(true);
             mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(usersLocation.getLatitude(), usersLocation.getLongitude())));
-            mMap.moveCamera(CameraUpdateFactory.zoomTo(12f));
+            mMap.moveCamera(CameraUpdateFactory.zoomTo(DEFAULT_ZOOM));
         } else {
             moveToTomsk();
         }
@@ -211,7 +297,7 @@ public class MapsFragment
 
     private void moveToTomsk() {
         mMap.moveCamera(CameraUpdateFactory.newLatLng(Constants.TOMSK_LATLNG));
-        mMap.moveCamera(CameraUpdateFactory.zoomTo(12f));
+        mMap.moveCamera(CameraUpdateFactory.zoomTo(DEFAULT_ZOOM));
     }
 
     @Override
@@ -305,6 +391,9 @@ public class MapsFragment
         BitmapDescriptor descriptor = BitmapDescriptorFactory.fromResource(R.mipmap.pin);
 
         List<FillingStation> filteredStations;
+        if (getArguments().containsKey(STATION_TO_CENTER_KEY)) {
+            fuelCategory = null;
+        }
         if (fuelCategory != null) {
             filteredStations = FillingStationsService.filterStationsByFuelCategory(
                     stations, fuelCategory
@@ -391,20 +480,20 @@ public class MapsFragment
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-//    @Override
-//    public void onDestroyView() {
-//        super.onDestroyView();
-//        FragmentManager fm;
-//        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-//            fm = getFragmentManager();
-//        } else {
-//            fm = getChildFragmentManager();
-//        }
-//        MapFragment f = (MapFragment) fm.findFragmentById(R.id.map);
-//        if (f != null) {
-//            getFragmentManager().beginTransaction().remove(f).commit();
-//        }
-//    }
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        FragmentManager fm;
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            fm = getFragmentManager();
+        } else {
+            fm = getChildFragmentManager();
+        }
+        MapFragment f = (MapFragment) fm.findFragmentById(R.id.map);
+        if (f != null) {
+            fm.beginTransaction().remove(f).commitAllowingStateLoss();
+        }
+    }
 
     @Override
     public void onClick(DialogInterface dialog, int which) {

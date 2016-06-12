@@ -2,9 +2,14 @@ package ru.yaklimenko.fuel.fragments;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -16,6 +21,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +37,11 @@ import ru.yaklimenko.fuel.db.entities.FuelCategory;
 import ru.yaklimenko.fuel.dialogs.FilterFuelDialogFragment;
 import ru.yaklimenko.fuel.dialogs.SortByPriceDialogFragment;
 import ru.yaklimenko.fuel.utils.CommonUtil;
+import rx.Observable;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action1;
+import rx.schedulers.Schedulers;
 
 /**
  * Created by Антон on 02.06.2016.
@@ -48,6 +59,17 @@ public class StationsByFuelFragment extends Fragment {
     private Map<FillingStation, Fuel> fuelsByStations;
     private boolean priceAscending = true;
 
+    public static void openStationsByFuelsFragment(FragmentManager fManager) {
+        Fragment f = fManager.findFragmentByTag(TAG);
+        if (f == null) {
+            f = new StationsByFuelFragment();
+        }
+        fManager.beginTransaction()
+                .replace(R.id.content_frame, f, TAG)
+                .addToBackStack(TAG)
+                .commit();
+    }
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -60,11 +82,24 @@ public class StationsByFuelFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View fragmentView = inflater.inflate(R.layout.fragment_stations_by_fuel, null, false);
+        View fragmentView = inflater.inflate(R.layout.fragment_stations_by_fuel, container, false);
         stationsByFuelList = (ListView)fragmentView.findViewById(R.id.stationsByFuelList);
         readSavedValues(savedInstanceState);
+        setTitle();
         fillList();
         return fragmentView;
+    }
+
+    private void setTitle() {
+        if (selectedCategory == null) {
+            Log.e(TAG, "setTitle: there is no fuel category to set title");
+        }
+        ActionBar actionBar = ((AppCompatActivity)getActivity()).getSupportActionBar();
+        if(actionBar == null) {
+            Log.e(TAG, "setTitle: cannot find action bar");
+            return;
+        }
+        actionBar.setTitle(selectedCategory.name);
     }
 
     private void readSavedValues(Bundle savedInstanceState) {
@@ -164,14 +199,41 @@ public class StationsByFuelFragment extends Fragment {
     }
 
     private void fillList() {
+        final Date stopwatch = new Date();
+        Action1<Map<FillingStation, Fuel>> onNextAction = new Action1<Map<FillingStation, Fuel>>() {
+            @Override
+            public void call(Map<FillingStation, Fuel> fillingStationFuelMap) {
+                fuelsByStations = fillingStationFuelMap;
+                List<FillingStation> stations = new ArrayList<>(fillingStationFuelMap.keySet());
+                stationsByFuelList.setAdapter(new StationsByFuelAdapter(stations));
+                Log.d(TAG, "fillList: overall:" + (new Date().getTime() - stopwatch.getTime()));
+            }
+        };
+
+        Observable.create( new Observable.OnSubscribe<Map<FillingStation, Fuel>>() {
+            @Override
+            public void call(Subscriber<? super Map<FillingStation, Fuel>> subscriber) {
+                subscriber.onNext(getFuelsByStationsMap());
+            }
+        })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(onNextAction);
+    }
+
+    @NonNull
+    private Map<FillingStation, Fuel> getFuelsByStationsMap() {
+        Date stopwatch = new Date();
         List<Fuel> fuels = FuelDao.getInstance().getByCategory(selectedCategory.id, priceAscending);
-        fuelsByStations = new LinkedHashMap<>();
+        Log.d(TAG, "fillList: loaded fuels from db in:" + (new Date().getTime() - stopwatch.getTime()));
+
+        Map<FillingStation, Fuel>  tempFuelsByStations = new LinkedHashMap<>();
         for (Fuel fuel : fuels) {
             FillingStation station = FillingStationDao.getInstance().queryForId(fuel.stationId);
-            fuelsByStations.put(station, fuel);
+            tempFuelsByStations.put(station, fuel);
         }
-        List<FillingStation> stations = new ArrayList<>(fuelsByStations.keySet());
-        stationsByFuelList.setAdapter(new StationsByFuelAdapter(stations));
+        Log.d(TAG, "fillList: loaded related stations from db in:" + (new Date().getTime() - stopwatch.getTime()));
+        return tempFuelsByStations;
     }
 
     @Override
@@ -213,8 +275,8 @@ public class StationsByFuelFragment extends Fragment {
                     convertView;
             Fuel fuel = fuelsByStations.get(items.get(position));
             final FillingStation station = items.get(position);
-            TextView category = (TextView)view.findViewById(R.id.stationsByFuelListCategory);
-            category.setText(selectedCategory.name);
+//            TextView category = (TextView)view.findViewById(R.id.stationsByFuelListCategory);
+//            category.setText(selectedCategory.name);
 
             TextView price = (TextView)view.findViewById(R.id.stationsByFuelListPrice);
             price.setText(getActivity().getResources().getString(R.string.price, fuel.price));

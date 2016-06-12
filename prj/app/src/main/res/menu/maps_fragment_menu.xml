@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:custom="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/refreshStations"
         android:icon="@drawable/ic_refresh"
         android:title="@string/refresh_stations"
-        android:showAsAction="ifRoom"
+        app:showAsAction="ifRoom"
         />
     <item
         android:id="@+id/filterFuel"
         android:icon="@drawable/ic_filter_fuel"
         android:title="@string/pick_a_fuel_type"
-        android:showAsAction="ifRoom"
+        app:showAsAction="ifRoom"
         />
 </menu>

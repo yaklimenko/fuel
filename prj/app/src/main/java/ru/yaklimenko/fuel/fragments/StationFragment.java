@@ -6,10 +6,15 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -38,32 +43,57 @@ public class StationFragment extends Fragment {
     private int fillingStationId = -1;
 
     public static void openStationFragment(int fillingStationId, FragmentManager fragmentManager) {
-        StationFragment stationFragment = new StationFragment();
-        Bundle args = new Bundle();
+        Fragment f = fragmentManager.findFragmentByTag(TAG);
+        if (f == null) {
+            f = new StationFragment();
+        }
+        Bundle args = f.getArguments();
         args.putInt(StationFragment.STATION_ID_KEY, fillingStationId);
-        stationFragment.setArguments(args);
+
         fragmentManager.beginTransaction()
-                .replace(R.id.content_frame, stationFragment, StationFragment.TAG)
-                .addToBackStack(MapsFragment.TAG)
+                .replace(R.id.content_frame, f, TAG)
+                .addToBackStack(TAG)
                 .commit();
+    }
+
+    public StationFragment() {
+        setArguments(new Bundle());
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        readArgs();
+
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         readSavedValues(savedInstanceState);
+        readArgs();
         if (fillingStationId == -1) {
             throw new IllegalStateException("cannot load fragment - unknown station");
         }
         View view = inflater.inflate(R.layout.fragment_station, container, false);
         fillFragmentWithData(view);
+        ImageButton button = (ImageButton) view.findViewById(R.id.stationPin);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MapsFragment.openMapsFragment(getActivity().getFragmentManager(), fillingStationId);
+            }
+        });
+        setTitle();
         return view;
+    }
+
+    private void setTitle() {
+        ActionBar actionBar = ((AppCompatActivity)getActivity()).getSupportActionBar();
+        if(actionBar == null) {
+            Log.e(TAG, "setTitle: cannot find action bar");
+            return;
+        }
+        actionBar.setTitle(R.string.app_mode_station);
     }
 
     private void fillFragmentWithData(View view) {
@@ -118,6 +148,7 @@ public class StationFragment extends Fragment {
         if (arguments.containsKey(STATION_ID_KEY)) {
             fillingStationId = arguments.getInt(STATION_ID_KEY);
         }
+        arguments.remove(STATION_ID_KEY);
     }
 
     private void readSavedValues(Bundle savedInstanceState) {

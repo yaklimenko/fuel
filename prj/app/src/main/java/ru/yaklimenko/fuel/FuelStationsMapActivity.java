@@ -1,20 +1,20 @@
 package ru.yaklimenko.fuel;
 
-import android.app.Activity;
-import android.app.Fragment;
-import android.app.FragmentManager;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-import ru.yaklimenko.fuel.fragments.StationsByFuelFragment;
 import ru.yaklimenko.fuel.fragments.MapsFragment;
+import ru.yaklimenko.fuel.fragments.StationsByFuelFragment;
 
-public class FuelStationsMapActivity extends Activity implements MapsFragment.OnMapLoadedListener {
+public class FuelStationsMapActivity extends AppCompatActivity implements MapsFragment.OnMapLoadedListener {
 
     public static final String TAG = "ActivityTestTag";
     public static final String WAS_LOADED_KEY = "wasLoadedKeyKey";
@@ -28,13 +28,14 @@ public class FuelStationsMapActivity extends Activity implements MapsFragment.On
 
     private String currentFragmentTag;
 
-    private Fragment currentFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate: ");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_fuel_stations_map);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.my_toolbar);
+        setSupportActionBar(toolbar);
         loadingPanel = findViewById(R.id.loadingPanel);
         readSavedValues(savedInstanceState);
 
@@ -46,7 +47,8 @@ public class FuelStationsMapActivity extends Activity implements MapsFragment.On
                 R.layout.drawer_list_item, modes));
 
         if (currentFragmentTag == null) {
-            openMapsFragment(getFragmentManager());
+            currentFragmentTag = MapsFragment.TAG;
+            MapsFragment.openMapsFragment(getFragmentManager());
         }
 
         drawerList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -54,36 +56,26 @@ public class FuelStationsMapActivity extends Activity implements MapsFragment.On
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 android.app.FragmentManager fManager = getFragmentManager();
                 if (position == 0) {
-                    openMapsFragment(fManager);
+                    currentFragmentTag = MapsFragment.TAG;
+                    MapsFragment.openMapsFragment(fManager);
                 } else if (position == 1) {
-                    openStationsByFulesFragment(fManager);
+                    currentFragmentTag = StationsByFuelFragment.TAG;
+                    StationsByFuelFragment.openStationsByFuelsFragment(fManager);
                 }
                 drawerLayout.closeDrawer(drawerList);
             }
         });
-    }
 
-    private void openStationsByFulesFragment(FragmentManager fManager) {
-        currentFragmentTag = StationsByFuelFragment.TAG;
-        currentFragment = new StationsByFuelFragment();
-        fManager.beginTransaction()
-                .replace(R.id.content_frame, currentFragment, StationsByFuelFragment.TAG)
-                .addToBackStack(StationsByFuelFragment.TAG)
-                .commit();
-    }
-
-    private void openMapsFragment(FragmentManager fManager) {
-        currentFragmentTag = MapsFragment.TAG;
-        currentFragment = new MapsFragment();
-        fManager.beginTransaction()
-                .replace(R.id.content_frame, currentFragment, MapsFragment.TAG)
-                .addToBackStack(MapsFragment.TAG)
-                .commit();
+        ActionBarDrawerToggle drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar,
+                R.string.app_menu, R.string.app_menu);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
+        drawerLayout.addDrawerListener(drawerToggle);
+        drawerToggle.syncState();
     }
 
     @Override
     protected void onStart() {
-        Log.d(TAG, "onStart: ");
         super.onStart();
         MapsFragment mapsFragment =
                 (MapsFragment)getFragmentManager().findFragmentByTag(MapsFragment.TAG);
@@ -113,41 +105,9 @@ public class FuelStationsMapActivity extends Activity implements MapsFragment.On
         super.onSaveInstanceState(outState);
     }
 
-
     @Override
     public void onMapLoaded() {
         loadingPanel.setVisibility(View.GONE);
         wasLoaded = true;
     }
-//
-//    @Override
-//    public void onBackPressed() {
-//
-//        int count = getFragmentManager().getBackStackEntryCount();
-//
-//        if (count == 0) {
-//            super.onBackPressed();
-//            //additional code
-//        } else {
-//            getFragmentManager().popBackStack();
-//        }
-//
-//    }
-
-
-    @Override
-    public void onBackPressed() {
-
-        // If the fragment exists and has some back-stack entry
-        if (currentFragment != null && currentFragment.getChildFragmentManager().getBackStackEntryCount() > 0){
-            // Get the fragment fragment manager - and pop the backstack
-            currentFragment.getChildFragmentManager().popBackStack();
-        }
-        // Else, nothing in the direct fragment back stack
-        else{
-            // Let super handle the back press
-            super.onBackPressed();
-        }
-    }
-
 }

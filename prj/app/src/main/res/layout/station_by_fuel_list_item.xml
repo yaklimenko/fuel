@@ -4,25 +4,29 @@
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="@dimen/stationByFuelListItemMargin">
-    <LinearLayout
-        android:layout_width="80dp"
+    android:layout_margin="@dimen/stationByFuelListItemMargin"
+    android:gravity="center_vertical">
+    <!--<LinearLayout-->
+        <!--android:layout_width="80dp"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:orientation="vertical"-->
+        <!--android:gravity="center_vertical"-->
+        <!--&gt;-->
+        <!--&lt;!&ndash;<TextView&ndash;&gt;-->
+            <!--&lt;!&ndash;android:layout_height="wrap_content"&ndash;&gt;-->
+            <!--&lt;!&ndash;android:layout_width="wrap_content"&ndash;&gt;-->
+            <!--&lt;!&ndash;style="@style/stationsByFuelTextField"&ndash;&gt;-->
+            <!--&lt;!&ndash;android:id="@+id/stationsByFuelListCategory"&ndash;&gt;-->
+            <!--&lt;!&ndash;/>&ndash;&gt;-->
+        <!---->
+    <!--</LinearLayout>-->
+
+    <TextView
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        >
-        <TextView
-            android:layout_height="wrap_content"
-            android:layout_width="wrap_content"
-            style="@style/stationsByFuelTextField"
-            android:id="@+id/stationsByFuelListCategory"
-            />
-        <TextView
-            android:layout_height="wrap_content"
-            android:layout_width="wrap_content"
-            style="@style/stationsByFuelTextField"
-            android:id="@+id/stationsByFuelListPrice"
-            />
-    </LinearLayout>
+        android:layout_width="80dp"
+        style="@style/stationsByFuelTextField"
+        android:id="@+id/stationsByFuelListPrice"
+        />
 
     <LinearLayout
         android:layout_width="wrap_content"

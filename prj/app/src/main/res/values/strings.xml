@@ -18,6 +18,8 @@
     <!-- главное меню -->
     <string name="app_mode_map">Карта</string>
     <string name="app_mode_list">Список</string>
+    <string name="app_mode_station">Станция</string>
+    <string name="app_menu">Меню</string>
 
     <!-- станции по категории -->
     <string name="price">%1$.2f р</string>

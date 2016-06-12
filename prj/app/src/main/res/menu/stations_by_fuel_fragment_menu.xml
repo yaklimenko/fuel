@@ -2,6 +2,12 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
+        android:id="@+id/showOnMap"
+        android:title="@string/showOnMapMenuItem"
+        android:icon="@drawable/ic_show_on_map"
+        app:showAsAction="ifRoom"
+        />
+    <item
         android:id="@+id/filterFuel"
         android:title="@string/filterFuelMenuItem"
         android:icon="@drawable/ic_filter_fuel"

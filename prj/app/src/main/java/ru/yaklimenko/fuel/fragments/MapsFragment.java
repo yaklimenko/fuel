@@ -72,7 +72,6 @@ public class MapsFragment
 
     private GoogleMap mMap;
 
-    private int stationToCenterId = -1;
     private List<Marker> stationsMarkers = new ArrayList<>();
     private List<FillingStation> stations;
     private Map<Marker, FillingStation> stationsByMarkers = new WeakHashMap<>();
@@ -100,19 +99,28 @@ public class MapsFragment
                 .commit();
     }
 
-    public static void openMapsFragment(FragmentManager fManager, int stationToCenterId) {
+    public static void openMapsFragmentForStation(FragmentManager fManager, int stationToCenterId) {
 
         Fragment f = fManager.findFragmentByTag(TAG);
-        Bundle args;
         if (f == null) {
             f = new MapsFragment();
-            args = new Bundle();
-            args.putInt(STATION_TO_CENTER_KEY, stationToCenterId);
-            f.setArguments(args);
-        } else {
-            args = f.getArguments();
-            args.putInt(STATION_TO_CENTER_KEY, stationToCenterId);
         }
+        Bundle args = f.getArguments();
+        args.putInt(STATION_TO_CENTER_KEY, stationToCenterId);
+        fManager.beginTransaction()
+                .replace(R.id.content_frame, f, TAG)
+                .addToBackStack(TAG)
+                .commit();
+    }
+
+    public static void openMapsFragmentForFuelCategory(FragmentManager fManager, int fuelCategoryId) {
+
+        Fragment f = fManager.findFragmentByTag(TAG);
+        if (f == null) {
+            f = new MapsFragment();
+        }
+        Bundle args = f.getArguments();
+        args.putInt(FUEL_CATEGORY_KEY, fuelCategoryId);
         fManager.beginTransaction()
                 .replace(R.id.content_frame, f, TAG)
                 .addToBackStack(TAG)
@@ -142,10 +150,19 @@ public class MapsFragment
         MapFragment mapFragment = getMapFragment();
         mapFragment.getMapAsync(this);
         readSavedValues(savedInstanceState);
+        readCategoryFromArgs();
         setHasOptionsMenu(true);
         setTitle();
 
         return root;
+    }
+
+    private void readCategoryFromArgs() {
+        if (!getArguments().containsKey(FUEL_CATEGORY_KEY)) {
+            return;
+        }
+        fuelCategory = FuelCategoryDao.getInstance().queryForId(getArguments().getInt(FUEL_CATEGORY_KEY));
+        getArguments().remove(FUEL_CATEGORY_KEY);
     }
 
     private void setTitle() {
@@ -220,10 +237,7 @@ public class MapsFragment
     @Nullable
     private Marker getMarkerFromArgs() {
         Bundle args = getArguments();
-        if (args == null) {
-            return null;
-        }
-        stationToCenterId = args.getInt(STATION_TO_CENTER_KEY, -1);
+        int stationToCenterId = args.getInt(STATION_TO_CENTER_KEY, -1);
         args.remove(STATION_TO_CENTER_KEY);
         if (stationToCenterId == -1) {
             return null;
@@ -239,8 +253,9 @@ public class MapsFragment
     }
 
     private void moveCameraToMarker(Marker markerToCenter) {
-        float zoom = mMap.getCameraPosition().zoom;
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(markerToCenter.getPosition(), DEFAULT_ZOOM));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
+                markerToCenter.getPosition(), DEFAULT_ZOOM + 2
+        ));
         markerToCenter.showInfoWindow();
     }
 
@@ -464,20 +479,24 @@ public class MapsFragment
                 if (resultCode == Activity.RESULT_OK) {
                      int fuelCategoryId =
                              data.getIntExtra(FilterFuelDialogFragment.FUEL_CATEGORY_KEY, -1);
-                    FuelCategory newFuelCategory;
-                    if (fuelCategoryId == -1) {
-                        newFuelCategory = null;
-                    } else {
-                        newFuelCategory = FuelCategoryDao.getInstance().queryForId(fuelCategoryId);
-                    }
-                    if (!CommonUtil.equals(newFuelCategory, fuelCategory)) {
-                        fuelCategory = newFuelCategory;
-                        setStations(stations);
-                    }
+                    onFuelCategoryChanged(fuelCategoryId);
                 }
                 break;
         }
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    private void onFuelCategoryChanged(int fuelCategoryId) {
+        FuelCategory newFuelCategory;
+        if (fuelCategoryId == -1) {
+            newFuelCategory = null;
+        } else {
+            newFuelCategory = FuelCategoryDao.getInstance().queryForId(fuelCategoryId);
+        }
+        if (!CommonUtil.equals(newFuelCategory, fuelCategory)) {
+            fuelCategory = newFuelCategory;
+            setStations(stations);
+        }
     }
 
     @Override

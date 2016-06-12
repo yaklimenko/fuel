@@ -116,8 +116,6 @@ public class StationsByFuelFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.stations_by_fuel_fragment_menu, menu);
-        MenuItem fuelTypeMenuItem = menu.findItem(R.id.filterFuel);
-        fuelTypeMenuItem.setVisible(true);
     }
 
     @Override
@@ -128,9 +126,18 @@ public class StationsByFuelFragment extends Fragment {
         } else if (item.getItemId() == R.id.sortByPrice) {
             onSortByPriceMenuClicked();
             return true;
+        } else if (item.getItemId() == R.id.showOnMap) {
+            onShowOnMapMenuItemClicked();
+            return true;
         }
         return super.onOptionsItemSelected(item);
 
+    }
+
+    private void onShowOnMapMenuItemClicked() {
+        MapsFragment.openMapsFragmentForFuelCategory(
+                getActivity().getFragmentManager(), selectedCategory.id
+        );
     }
 
     private void onFuelSelectMenuItemClicked() {

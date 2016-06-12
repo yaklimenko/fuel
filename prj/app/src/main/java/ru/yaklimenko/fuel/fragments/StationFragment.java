@@ -2,7 +2,6 @@ package ru.yaklimenko.fuel.fragments;
 
 import android.app.Fragment;
 import android.app.FragmentManager;
-import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -10,11 +9,12 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -63,6 +63,7 @@ public class StationFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
 
     }
 
@@ -76,13 +77,6 @@ public class StationFragment extends Fragment {
         }
         View view = inflater.inflate(R.layout.fragment_station, container, false);
         fillFragmentWithData(view);
-        ImageButton button = (ImageButton) view.findViewById(R.id.stationPin);
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                MapsFragment.openMapsFragment(getActivity().getFragmentManager(), fillingStationId);
-            }
-        });
         setTitle();
         return view;
     }
@@ -94,6 +88,27 @@ public class StationFragment extends Fragment {
             return;
         }
         actionBar.setTitle(R.string.app_mode_station);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.station_fragment_menu, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.showOnMap) {
+            onShowOnMapMenuItemClicked();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+
+    }
+
+    private void onShowOnMapMenuItemClicked() {
+        MapsFragment.openMapsFragmentForStation(
+                getActivity().getFragmentManager(), fillingStationId
+        );
     }
 
     private void fillFragmentWithData(View view) {

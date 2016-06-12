@@ -25,6 +25,7 @@
     <string name="price">%1$.2f р</string>
     <string name="filterFuelMenuItem">Выбрать топливо</string>
     <string name="sortByPriceMenuItem">Сортировать по цене</string>
+    <string name="showOnMapMenuItem">Показать на карте</string>
 
 
 

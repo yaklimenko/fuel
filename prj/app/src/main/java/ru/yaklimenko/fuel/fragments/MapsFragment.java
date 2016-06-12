@@ -224,11 +224,13 @@ public class MapsFragment
         Marker marketToCenter = getMarkerFromArgs();
         if (marketToCenter != null) {
             moveCameraToMarker(marketToCenter);
+            tryEnableMyLocation();
             return;
         }
 
         if (usersCameraPosition != null) {
             moveToSavedPosition();
+            tryEnableMyLocation();
             return;
         }
         moveToMyOrCityCenterLocation();
@@ -247,7 +249,7 @@ public class MapsFragment
                 .queryForId(stationToCenterId);
         Marker marketToCenter = markersByStations.get(stationToCenter);
         if (marketToCenter == null) {
-            throw new IllegalStateException("cannot find marker");
+            Log.e(TAG, "getMarkerFromArgs: cannot find marker");
         }
         return marketToCenter;
     }
@@ -265,7 +267,16 @@ public class MapsFragment
     }
 
     private void moveToMyOrCityCenterLocation() {
-        //LatLng user = new LatLng(location.getLatitude(), location.getLongitude());
+        Location myLocation = tryEnableMyLocation();
+        if (myLocation != null) {
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(myLocation.getLatitude(), myLocation.getLongitude())));
+            mMap.moveCamera(CameraUpdateFactory.zoomTo(DEFAULT_ZOOM));
+        } else {
+            moveToTomsk();
+        }
+    }
+
+    private Location tryEnableMyLocation() {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
             boolean fineLocationGranted = getContext().checkSelfPermission(
                     android.Manifest.permission.ACCESS_FINE_LOCATION
@@ -276,38 +287,34 @@ public class MapsFragment
             ) == PackageManager.PERMISSION_GRANTED;
 
             if (!fineLocationGranted && !coarseLocationGranted) {
-                return;//permissions were requested on host activity
+                return null;//permissions were requested on host activity
             }
         }
 
-        Location usersLocation = null;
+        Location myLocation = null;
         LocationManager locationManager = (LocationManager) getActivity()
                 .getSystemService(Context.LOCATION_SERVICE);
         List<String> providers = locationManager.getAllProviders();
         if (providers.contains(LocationManager.GPS_PROVIDER)) {
-            usersLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            myLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
             providers.remove(LocationManager.GPS_PROVIDER);
         }
-        if (usersLocation == null && providers.contains(LocationManager.NETWORK_PROVIDER)) {
-            usersLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        if (myLocation == null && providers.contains(LocationManager.NETWORK_PROVIDER)) {
+            myLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
             providers.remove(LocationManager.NETWORK_PROVIDER);
         }
-        if (usersLocation == null) {
+        if (myLocation == null) {
             for (String provider : providers) {
-                usersLocation = locationManager.getLastKnownLocation(provider);
-                if (usersLocation != null) {
+                myLocation = locationManager.getLastKnownLocation(provider);
+                if (myLocation != null) {
                     break;
                 }
             }
         }
-
-        if (usersLocation != null) {
+        if (myLocation != null) {
             mMap.setMyLocationEnabled(true);
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(usersLocation.getLatitude(), usersLocation.getLongitude())));
-            mMap.moveCamera(CameraUpdateFactory.zoomTo(DEFAULT_ZOOM));
-        } else {
-            moveToTomsk();
         }
+        return myLocation;
     }
 
     private void moveToTomsk() {

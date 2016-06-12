@@ -169,6 +169,7 @@ public class StationsByFuelFragment extends Fragment {
                     }
                     if (!CommonUtil.equals(newFuelCategory, selectedCategory)) {
                         selectedCategory = newFuelCategory;
+                        setTitle();
                         fillList();
                     }
                 }

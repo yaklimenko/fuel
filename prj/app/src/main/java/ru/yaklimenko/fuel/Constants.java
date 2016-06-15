@@ -24,6 +24,6 @@ public class Constants {
 
     //misc
     public static final long STATIONS_UPDATE_PERIOD = 4 * 60 * 60 * 1000; //4 hours
-    public static final long STATIONS_UPDATE_CHECK_PERIOD = 1000; //4 minutes
+    public static final long STATIONS_UPDATE_CHECK_PERIOD = 1000;
 
 }

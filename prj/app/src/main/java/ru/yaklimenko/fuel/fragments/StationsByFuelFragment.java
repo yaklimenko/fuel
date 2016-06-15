@@ -20,11 +20,7 @@ import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import ru.yaklimenko.fuel.Constants;
 import ru.yaklimenko.fuel.R;
@@ -99,7 +95,7 @@ public class StationsByFuelFragment extends Fragment {
             Log.e(TAG, "setTitle: cannot find action bar");
             return;
         }
-        actionBar.setTitle(selectedCategory.name);
+        actionBar.setTitle(selectedCategory == null ? "" : selectedCategory.name);
     }
 
     private void readSavedValues(Bundle savedInstanceState) {
@@ -232,6 +228,9 @@ public class StationsByFuelFragment extends Fragment {
     @NonNull
     private Map<FillingStation, Fuel> getFuelsByStationsMap() {
         Date stopwatch = new Date();
+        if (selectedCategory == null) {
+            return new HashMap<>();
+        }
         List<Fuel> fuels = FuelDao.getInstance().getByCategory(selectedCategory.id, priceAscending);
         Log.d(TAG, "fillList: loaded fuels from db in:" + (new Date().getTime() - stopwatch.getTime()));
 

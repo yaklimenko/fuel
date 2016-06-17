@@ -8,29 +8,14 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.ListView;
-import android.widget.TextView;
+import android.view.*;
+import android.widget.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import ru.yaklimenko.fuel.R;
-import ru.yaklimenko.fuel.db.dao.FillingStationDao;
-import ru.yaklimenko.fuel.db.dao.FuelCategoryDao;
-import ru.yaklimenko.fuel.db.dao.FuelDao;
-import ru.yaklimenko.fuel.db.entities.FillingStation;
-import ru.yaklimenko.fuel.db.entities.Fuel;
-import ru.yaklimenko.fuel.db.entities.FuelCategory;
+import ru.yaklimenko.fuel.db.dao.*;
+import ru.yaklimenko.fuel.db.entities.*;
 
 /**
  * Created by Антон on 07.06.2016.

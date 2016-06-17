@@ -1,11 +1,7 @@
 package ru.yaklimenko.fuel.fragments;
 
-import android.app.Activity;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
+import android.app.*;
+import android.content.*;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
@@ -15,36 +11,18 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
 
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapFragment;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.CameraPosition;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.*;
+import com.google.android.gms.maps.model.*;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.net.ConnectException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.WeakHashMap;
+import java.util.*;
 
-import ru.yaklimenko.fuel.Constants;
-import ru.yaklimenko.fuel.FuelApplicationPreferences;
-import ru.yaklimenko.fuel.R;
+import ru.yaklimenko.fuel.*;
 import ru.yaklimenko.fuel.db.dao.FillingStationDao;
 import ru.yaklimenko.fuel.db.dao.FuelCategoryDao;
 import ru.yaklimenko.fuel.db.entities.FillingStation;
@@ -269,8 +247,10 @@ public class MapsFragment
     private void moveToMyOrCityCenterLocation() {
         Location myLocation = tryEnableMyLocation();
         if (myLocation != null) {
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(myLocation.getLatitude(), myLocation.getLongitude())));
-            mMap.moveCamera(CameraUpdateFactory.zoomTo(DEFAULT_ZOOM));
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
+                    new LatLng(myLocation.getLatitude(), myLocation.getLongitude()),
+                    DEFAULT_ZOOM
+            ));
         } else {
             moveToTomsk();
         }
@@ -318,8 +298,7 @@ public class MapsFragment
     }
 
     private void moveToTomsk() {
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(Constants.TOMSK_LATLNG));
-        mMap.moveCamera(CameraUpdateFactory.zoomTo(DEFAULT_ZOOM));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(Constants.TOMSK_LATLNG, DEFAULT_ZOOM));
     }
 
     @Override
@@ -458,6 +437,16 @@ public class MapsFragment
         if (mMap != null) {
             usersCameraPosition = mMap.getCameraPosition();
         }
+        FragmentManager fm;
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            fm = getFragmentManager();
+        } else {
+            fm = getChildFragmentManager();
+        }
+        MapFragment f = (MapFragment) fm.findFragmentById(R.id.map);
+        if (f != null) {
+            fm.beginTransaction().remove(f).commitAllowingStateLoss();
+        }
     }
 
     @Override
@@ -506,20 +495,8 @@ public class MapsFragment
         }
     }
 
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        FragmentManager fm;
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            fm = getFragmentManager();
-        } else {
-            fm = getChildFragmentManager();
-        }
-        MapFragment f = (MapFragment) fm.findFragmentById(R.id.map);
-        if (f != null) {
-            fm.beginTransaction().remove(f).commitAllowingStateLoss();
-        }
-    }
+
+
 
     @Override
     public void onClick(DialogInterface dialog, int which) {

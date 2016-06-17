@@ -1,8 +1,6 @@
 package ru.yaklimenko.fuel.fragments;
 
-import android.app.Activity;
-import android.app.Fragment;
-import android.app.FragmentManager;
+import android.app.*;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -10,26 +8,15 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.ListView;
-import android.widget.TextView;
+import android.view.*;
+import android.widget.*;
 
 import java.util.*;
 
 import ru.yaklimenko.fuel.Constants;
 import ru.yaklimenko.fuel.R;
-import ru.yaklimenko.fuel.db.dao.FillingStationDao;
-import ru.yaklimenko.fuel.db.dao.FuelCategoryDao;
-import ru.yaklimenko.fuel.db.dao.FuelDao;
-import ru.yaklimenko.fuel.db.entities.FillingStation;
-import ru.yaklimenko.fuel.db.entities.Fuel;
-import ru.yaklimenko.fuel.db.entities.FuelCategory;
+import ru.yaklimenko.fuel.db.dao.*;
+import ru.yaklimenko.fuel.db.entities.*;
 import ru.yaklimenko.fuel.dialogs.FilterFuelDialogFragment;
 import ru.yaklimenko.fuel.dialogs.SortByPriceDialogFragment;
 import ru.yaklimenko.fuel.utils.CommonUtil;

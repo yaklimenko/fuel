@@ -9,22 +9,14 @@ import com.j256.ormlite.table.TableUtils;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+import okhttp3.*;
 import ru.yaklimenko.fuel.Constants;
 import ru.yaklimenko.fuel.FuelApplicationPreferences;
 import ru.yaklimenko.fuel.db.DbHelperManager;
-import ru.yaklimenko.fuel.db.dao.FillingStationDao;
-import ru.yaklimenko.fuel.db.dao.FuelCategoryDao;
-import ru.yaklimenko.fuel.db.dao.FuelDao;
-import ru.yaklimenko.fuel.db.entities.FillingStation;
-import ru.yaklimenko.fuel.db.entities.Fuel;
-import ru.yaklimenko.fuel.db.entities.FuelCategory;
+import ru.yaklimenko.fuel.db.dao.*;
+import ru.yaklimenko.fuel.db.entities.*;
 import ru.yaklimenko.fuel.dto.FillingStationsWrapper;
 import ru.yaklimenko.fuel.dto.FuelCategoriesWrapper;
 import rx.Observable;

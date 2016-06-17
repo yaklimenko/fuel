@@ -3,10 +3,6 @@ package ru.yaklimenko.fuel.db;
 import android.content.Context;
 
 import com.j256.ormlite.android.apptools.OpenHelperManager;
-import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.dao.DaoManager;
-
-import java.sql.SQLException;
 
 /**
  * Created by Антон on 25.05.2016.

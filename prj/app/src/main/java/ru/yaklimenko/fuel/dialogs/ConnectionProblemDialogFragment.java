@@ -1,8 +1,6 @@
 package ru.yaklimenko.fuel.dialogs;
 
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.DialogFragment;
+import android.app.*;
 import android.os.Bundle;
 
 import ru.yaklimenko.fuel.R;

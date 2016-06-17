@@ -4,9 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ru.yaklimenko.fuel.db.dao.FuelDao;
-import ru.yaklimenko.fuel.db.entities.FillingStation;
-import ru.yaklimenko.fuel.db.entities.Fuel;
-import ru.yaklimenko.fuel.db.entities.FuelCategory;
+import ru.yaklimenko.fuel.db.entities.*;
 
 /**
  * Created by Антон on 31.05.2016.

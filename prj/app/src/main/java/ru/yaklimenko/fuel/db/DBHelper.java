@@ -11,9 +11,7 @@ import com.j256.ormlite.table.TableUtils;
 import java.io.File;
 import java.sql.SQLException;
 
-import ru.yaklimenko.fuel.db.entities.FillingStation;
-import ru.yaklimenko.fuel.db.entities.Fuel;
-import ru.yaklimenko.fuel.db.entities.FuelCategory;
+import ru.yaklimenko.fuel.db.entities.*;
 
 /**
  * Created by Антон on 21.05.2016.
